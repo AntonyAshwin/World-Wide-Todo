@@ -378,6 +378,19 @@ h1 { font-size: 28px; margin: 0; }
 .user-picker-card h1 { font-size: 36px; margin: 0 0 8px 0; }
 .user-picker-card p  { color: var(--muted); font-size: 17px; margin: 0 0 32px 0; }
 .user-list { display: flex; flex-direction: column; gap: 12px; }
+.user-input {
+  width: 100%;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.user-input:focus { outline: none; border-color: var(--accent); }
+.user-error { color: var(--danger); font-size: 14px; margin: 4px 0 0 0; }
 .user-btn {
   width: 100%;
   padding: 18px;

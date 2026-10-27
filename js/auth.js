@@ -23,19 +23,34 @@ function showPicker(users) {
   return new Promise(resolve => {
     const overlay = document.getElementById("userPicker");
     const list    = document.getElementById("userList");
-    list.innerHTML = "";
-    users.forEach(name => {
-      const btn = document.createElement("button");
-      btn.className = "user-btn";
-      btn.textContent = name;
-      btn.addEventListener("click", () => {
+    list.innerHTML = `
+      <input id="userInput" class="user-input" type="text"
+             placeholder="Enter your name" autocomplete="off" spellcheck="false" />
+      <button id="userSubmit" class="user-btn">Continue</button>
+      <p id="userError" class="user-error hidden">User not found.</p>
+    `;
+
+    const input  = list.querySelector("#userInput");
+    const submit = list.querySelector("#userSubmit");
+    const error  = list.querySelector("#userError");
+
+    const attempt = () => {
+      const name = input.value.trim();
+      if (users.includes(name)) {
         localStorage.setItem(STORAGE_KEY, name);
         overlay.classList.add("hidden");
         resolve(name);
-      });
-      list.appendChild(btn);
-    });
+      } else {
+        error.classList.remove("hidden");
+        input.select();
+      }
+    };
+
+    submit.addEventListener("click", attempt);
+    input.addEventListener("keydown", e => { if (e.key === "Enter") attempt(); });
+
     overlay.classList.remove("hidden");
+    setTimeout(() => input.focus(), 100);
   });
 }
 
