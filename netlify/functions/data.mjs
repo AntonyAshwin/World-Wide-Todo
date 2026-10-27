@@ -10,7 +10,7 @@ export default async (req) => {
 
   if (req.method === "GET") {
     const data = await store.get(key, { type: "json" });
-    return Response.json(data || { tasks: [], done: {} });
+    return Response.json(data || { tasks: [], done: {}, color: null });
   }
 
   if (req.method === "POST") {
@@ -18,7 +18,8 @@ export default async (req) => {
     try { body = await req.json(); } catch { return new Response("Bad JSON", { status: 400 }); }
     const clean = {
       tasks: Array.isArray(body.tasks) ? body.tasks : [],
-      done: body.done && typeof body.done === "object" ? body.done : {},
+      done:  body.done && typeof body.done === "object" ? body.done : {},
+      color: typeof body.color === "string" ? body.color : null,
     };
     await store.setJSON(key, clean);
     return Response.json({ ok: true });

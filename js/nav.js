@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { TODAY } from './date.js';
 import { renderTasks } from './tasks-view.js';
+import { renderSettings } from './settings.js';
 
 const nav      = document.getElementById("sideNav");
 const backdrop = document.getElementById("navBackdrop");
@@ -15,8 +16,8 @@ function closeNav() {
   backdrop.classList.add("hidden");
 }
 
-const VIEWS  = ["today", "history", "tasks", "stats"];
-const TITLES = { today: "Today", history: "History", tasks: "Tasks", stats: "Stats" };
+const VIEWS  = ["today", "history", "tasks", "stats", "settings"];
+const TITLES = { today: "Today", history: "History", tasks: "Tasks", stats: "Stats", settings: "Settings" };
 
 export function switchView(id) {
   VIEWS.forEach(v => document.getElementById(`view-${v}`).classList.toggle("hidden", v !== id));
@@ -25,9 +26,10 @@ export function switchView(id) {
   );
   document.getElementById("title").textContent = TITLES[id] || "Ashwin's TODO";
   document.body.dataset.view = id;
-  if (id === "history") renderHistory();
-  if (id === "tasks")   renderTasks();
-  if (id === "stats")   renderStats();
+  if (id === "history")  renderHistory();
+  if (id === "tasks")    renderTasks();
+  if (id === "stats")    renderStats();
+  if (id === "settings") renderSettings();
   closeNav();
 }
 

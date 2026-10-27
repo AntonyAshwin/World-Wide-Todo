@@ -13,7 +13,6 @@
   <div id="userPicker" class="user-picker hidden">
     <div class="user-picker-card">
       <h1>Ashwin's TODO</h1>
-      <p>Who are you?</p>
       <div id="userList" class="user-list"></div>
     </div>
   </div>
@@ -25,6 +24,7 @@
     <button class="nav-item active" data-view="today">📋 Today</button>
     <button class="nav-item" data-view="tasks">✏️ Tasks</button>
     <button class="nav-item" data-view="stats">📊 Stats</button>
+    <button class="nav-item" data-view="settings">⚙️ Settings</button>
     <button class="nav-item" data-view="history">📅 History</button>
     <div class="sidenav-footer">
       <button id="switchUserBtn" class="nav-item switch-user-btn">
@@ -62,6 +62,10 @@
 
     <div id="view-stats" class="hidden">
       <div id="statsContent"></div>
+    </div>
+
+    <div id="view-settings" class="hidden">
+      <div id="settingsContent"></div>
     </div>
   </main>
 

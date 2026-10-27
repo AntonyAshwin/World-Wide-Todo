@@ -404,6 +404,19 @@ h1 { font-size: 28px; margin: 0; }
   transition: background .15s, border-color .15s;
 }
 .user-btn:active { background: var(--surface-2); border-color: var(--accent); }
+.user-link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  padding: 8px 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  width: 100%;
+  text-align: center;
+}
+.user-link:active { color: var(--text); }
 
 /* hide today-only header elements on other views */
 body[data-view="history"] .date,
@@ -509,3 +522,72 @@ body[data-view="stats"]   .fab { display: none; }
 }
 .tasks-btn.edit:active { color: var(--text); }
 .tasks-btn.del:active  { color: var(--danger); }
+
+/* ---- settings view ---- */
+.settings-section { margin-bottom: 28px; }
+.settings-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 10px;
+}
+.settings-name-row { display: flex; gap: 10px; align-items: center; }
+.settings-input {
+  flex: 1 1 auto;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 16px;
+}
+.settings-input:focus { outline: none; border-color: var(--accent); }
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  padding-top: 4px;
+}
+.color-swatch {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--c);
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+}
+.color-swatch:active { transform: scale(.9); }
+.color-swatch.selected {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--c);
+  transform: scale(1.1);
+}
+
+/* ---- password field with eye toggle ---- */
+.pw-field {
+  position: relative;
+  width: 100%;
+}
+.pw-field .user-input,
+.pw-field .settings-input {
+  padding-right: 48px;
+  width: 100%;
+}
+.pw-eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  padding: 4px;
+  cursor: pointer;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.pw-eye:active { color: var(--text); }
+
+.s-pw-ok { color: var(--accent); font-size: 14px; margin: 4px 0 0; }

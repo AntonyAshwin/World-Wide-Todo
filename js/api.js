@@ -4,7 +4,7 @@ import { getUser } from './auth.js';
 const API = "/api/state";
 let saveTimer = null;
 
-function apiUrl() { return `${API}?user=${encodeURIComponent(getUser())}`; }
+function apiUrl()   { return `${API}?user=${encodeURIComponent(getUser())}`; }
 function cacheKey() { return `Ashwin's TODO.cache.${getUser()}`; }
 
 export function setSync(msg, err = false) {
@@ -20,7 +20,7 @@ export function cache() {
 export async function loadState(render) {
   try {
     const raw = localStorage.getItem(cacheKey());
-    if (raw) { const d = JSON.parse(raw); updateState(d.tasks || [], d.done || {}); }
+    if (raw) { const d = JSON.parse(raw); updateState(d.tasks || [], d.done || {}, d.color || null); }
   } catch {}
   render();
 
@@ -28,7 +28,7 @@ export async function loadState(render) {
     const res  = await fetch(apiUrl());
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
-    updateState(data.tasks || [], data.done || {});
+    updateState(data.tasks || [], data.done || {}, data.color || null);
     cache();
     render();
     setSync("Synced ✓");
