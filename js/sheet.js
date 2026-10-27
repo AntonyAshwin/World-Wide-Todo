@@ -5,9 +5,12 @@ import { render } from './render.js';
 
 const sheet    = document.getElementById("sheet");
 const backdrop = document.getElementById("sheetBackdrop");
+const sheetH2  = document.querySelector("#sheet h2");
+const saveBtn  = document.getElementById("saveBtn");
 const recurChk = document.getElementById("f-recur");
 const wdPicker = document.getElementById("weekdayPicker");
-let pickedDays = new Set();
+let pickedDays   = new Set();
+let editingTask  = null;
 
 WD_LETTER.forEach((label, i) => {
   const b = document.createElement("div");
@@ -21,12 +24,44 @@ WD_LETTER.forEach((label, i) => {
   wdPicker.appendChild(b);
 });
 
+function setWdPicker(days) {
+  pickedDays = new Set(days);
+  wdPicker.querySelectorAll(".wd").forEach((e, i) => e.classList.toggle("on", pickedDays.has(i)));
+}
+
 export function openSheet() {
+  editingTask = null;
   document.getElementById("f-name").value   = "";
   document.getElementById("f-points").value = "1";
   recurChk.checked = true;
-  pickedDays = new Set([TODAY_WD]);
-  wdPicker.querySelectorAll(".wd").forEach((e, i) => e.classList.toggle("on", i === TODAY_WD));
+  setWdPicker([TODAY_WD]);
+  sheetH2.textContent  = "New task";
+  saveBtn.textContent  = "Add task";
+  sheet.classList.remove("hidden");
+  backdrop.classList.remove("hidden");
+  document.getElementById("f-name").focus();
+}
+
+export function openEditSheet(task) {
+  editingTask = task;
+  document.getElementById("f-name").value   = task.name;
+  document.getElementById("f-points").value = task.points ?? 1;
+
+  // normalise legacy `recur` field to new shape
+  let recurring, weekdays;
+  if (task.recur) {
+    if (task.recur === "daily")  { recurring = true;  weekdays = [0,1,2,3,4,5,6]; }
+    else if (task.recur === "weekly") { recurring = true;  weekdays = task.weekdays || []; }
+    else                         { recurring = false; weekdays = task.weekdays || [TODAY_WD]; }
+  } else {
+    recurring = task.recurring ?? false;
+    weekdays  = task.weekdays  || [];
+  }
+
+  recurChk.checked = recurring;
+  setWdPicker(weekdays);
+  sheetH2.textContent = "Edit task";
+  saveBtn.textContent = "Save changes";
   sheet.classList.remove("hidden");
   backdrop.classList.remove("hidden");
   document.getElementById("f-name").focus();
@@ -35,6 +70,7 @@ export function openSheet() {
 export function closeSheet() {
   sheet.classList.add("hidden");
   backdrop.classList.add("hidden");
+  editingTask = null;
 }
 
 function resolveDates(days) {
@@ -50,18 +86,30 @@ function resolveDates(days) {
 export function addTask() {
   const name = document.getElementById("f-name").value.trim();
   if (!name) { alert("Give the task a name."); return; }
-  const points = Math.max(0, parseInt(document.getElementById("f-points").value, 10) || 0);
-  const days   = [...pickedDays].sort((a, b) => a - b);
+  const points    = Math.max(0, parseInt(document.getElementById("f-points").value, 10) || 0);
+  const days      = [...pickedDays].sort((a, b) => a - b);
   if (days.length === 0) { alert("Pick at least one day."); return; }
   const recurring = recurChk.checked;
 
-  const task = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    name, points, recurring, weekdays: days,
-  };
-  if (!recurring) task.dates = resolveDates(days);
+  if (editingTask) {
+    editingTask.name      = name;
+    editingTask.points    = points;
+    editingTask.recurring = recurring;
+    editingTask.weekdays  = days;
+    // migrate off legacy recur field
+    delete editingTask.recur;
+    delete editingTask.date;
+    if (recurring) delete editingTask.dates;
+    else           editingTask.dates = resolveDates(days);
+  } else {
+    const task = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name, points, recurring, weekdays: days,
+    };
+    if (!recurring) task.dates = resolveDates(days);
+    state.tasks.push(task);
+  }
 
-  state.tasks.push(task);
   pushState();
   closeSheet();
   render();

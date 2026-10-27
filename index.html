@@ -7,13 +7,24 @@
   <title>World Wide Today</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body data-view="today">
+
+  <!-- Side nav -->
+  <div id="navBackdrop" class="nav-backdrop hidden"></div>
+  <nav id="sideNav" class="sidenav" aria-label="Main navigation">
+    <div class="sidenav-header">myBoard</div>
+    <button class="nav-item active" data-view="today">📋 Today</button>
+    <button class="nav-item" data-view="history">📅 History</button>
+    <button class="nav-item" data-view="tasks">✏️ Tasks</button>
+    <button class="nav-item" data-view="stats">📊 Stats</button>
+  </nav>
+
   <header class="app-header">
     <div class="header-row">
       <h1 id="title">Today</h1>
-      <div class="score" id="score" aria-live="polite">0 / 0</div>
     </div>
     <div class="subrow">
+      <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
       <div class="date" id="date"></div>
       <div class="lifetime" id="lifetime" aria-live="polite">⭐ 0 total</div>
     </div>
@@ -22,8 +33,22 @@
   </header>
 
   <main>
-    <ul id="taskList" class="task-list"></ul>
-    <p id="empty" class="empty hidden">No tasks today. Tap + to add one.</p>
+    <div id="view-today">
+      <ul id="taskList" class="task-list"></ul>
+      <p id="empty" class="empty hidden">No tasks today. Tap + to add one.</p>
+    </div>
+
+    <div id="view-history" class="hidden">
+      <div id="historyContent"></div>
+    </div>
+
+    <div id="view-tasks" class="hidden">
+      <div id="tasksContent"></div>
+    </div>
+
+    <div id="view-stats" class="hidden">
+      <div id="statsContent"></div>
+    </div>
   </main>
 
   <button id="addBtn" class="fab" aria-label="Add task">+</button>
