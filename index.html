@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#111827" />
+  <title>myBoard — Today</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-row">
+      <h1 id="title">Today</h1>
+      <div class="score" id="score" aria-live="polite">0 / 0</div>
+    </div>
+    <div class="subrow">
+      <div class="date" id="date"></div>
+      <div class="lifetime" id="lifetime" aria-live="polite">⭐ 0 total</div>
+    </div>
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="sync" id="sync"></div>
+  </header>
+
+  <main>
+    <ul id="taskList" class="task-list"></ul>
+    <p id="empty" class="empty hidden">No tasks today. Tap + to add one.</p>
+  </main>
+
+  <button id="addBtn" class="fab" aria-label="Add task">+</button>
+
+  <!-- Add task sheet -->
+  <div id="sheetBackdrop" class="backdrop hidden"></div>
+  <div id="sheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="Add task">
+    <h2>New task</h2>
+    <label>
+      Name
+      <input id="f-name" type="text" placeholder="e.g. Drink water" autocomplete="off" />
+    </label>
+    <label>
+      Points
+      <input id="f-points" type="number" min="0" step="1" value="1" inputmode="numeric" />
+    </label>
+    <div class="field-label">Days</div>
+    <div id="weekdayPicker" class="weekdays"></div>
+    <label class="switch-row">
+      <span>Recurring <small>(repeat every week)</small></span>
+      <input id="f-recur" type="checkbox" class="switch" checked />
+    </label>
+    <div class="sheet-actions">
+      <button id="cancelBtn" class="btn btn-ghost">Cancel</button>
+      <button id="saveBtn" class="btn btn-primary">Add task</button>
+    </div>
+  </div>
+
+  <!-- Confirm popup -->
+  <div id="confirmBackdrop" class="backdrop hidden"></div>
+  <div id="confirmPopup" class="confirm hidden" role="dialog" aria-modal="true" aria-label="Confirm">
+    <p id="confirmText">Delete this task?</p>
+    <div class="confirm-actions">
+      <button id="confirmNo" class="icon-btn no" aria-label="Cancel">✕</button>
+      <button id="confirmYes" class="icon-btn yes" aria-label="Confirm">✓</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "myboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mobile daily task tracker with points, backed by Netlify Blobs",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
