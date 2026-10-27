@@ -4,19 +4,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#111827" />
-  <title>World Wide Today</title>
+  <title>Ashwin's TODO</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body data-view="today">
 
+  <!-- User picker (shown before app if no user selected) -->
+  <div id="userPicker" class="user-picker hidden">
+    <div class="user-picker-card">
+      <h1>Ashwin's TODO</h1>
+      <p>Who are you?</p>
+      <div id="userList" class="user-list"></div>
+    </div>
+  </div>
+
   <!-- Side nav -->
   <div id="navBackdrop" class="nav-backdrop hidden"></div>
   <nav id="sideNav" class="sidenav" aria-label="Main navigation">
-    <div class="sidenav-header">myBoard</div>
+    <div class="sidenav-header">Ashwin's TODO</div>
     <button class="nav-item active" data-view="today">📋 Today</button>
     <button class="nav-item" data-view="history">📅 History</button>
     <button class="nav-item" data-view="tasks">✏️ Tasks</button>
     <button class="nav-item" data-view="stats">📊 Stats</button>
+    <div class="sidenav-footer">
+      <button id="switchUserBtn" class="nav-item switch-user-btn">
+        👤 <span id="currentUserLabel"></span>
+      </button>
+    </div>
   </nav>
 
   <header class="app-header">

@@ -1,5 +1,5 @@
 {
-  "name": "myboard",
+  "name": "ashwins-todo",
   "version": "1.0.0",
   "private": true,
   "description": "Mobile daily task tracker with points, backed by Netlify Blobs",

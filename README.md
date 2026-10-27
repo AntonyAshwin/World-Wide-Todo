@@ -1,4 +1,4 @@
-# myBoard
+# Ashwin's TODO
 
 Mobile-friendly daily task tracker with points. Data stored in a real DB — **Netlify Blobs** — via a serverless function. Single user, no login.
 

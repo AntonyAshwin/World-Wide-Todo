@@ -23,7 +23,7 @@ export function switchView(id) {
   document.querySelectorAll(".nav-item").forEach(btn =>
     btn.classList.toggle("active", btn.dataset.view === id)
   );
-  document.getElementById("title").textContent = TITLES[id] || "myBoard";
+  document.getElementById("title").textContent = TITLES[id] || "Ashwin's TODO";
   document.body.dataset.view = id;
   if (id === "history") renderHistory();
   if (id === "tasks")   renderTasks();
