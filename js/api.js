@@ -35,6 +35,7 @@ export const api = {
     update: (id, data) => request('PUT', `/tasks/${id}`, data),
     delete: (id) => request('DELETE', `/tasks/${id}`),
     complete: (id) => request('POST', `/tasks/${id}/complete`),
+    unapprove: (id) => request('POST', `/tasks/${id}/unapprove`),
     requestApproval: (id, data) => request('POST', `/tasks/${id}/request-approval`, data),
     approveRespond: (approvalId, accept) => request('PUT', `/tasks/${approvalId}/approve`, { accept }),
     pendingApprovals: () => request('GET', '/tasks/approvals'),

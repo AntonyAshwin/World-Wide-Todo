@@ -44,12 +44,14 @@ export function render(container) {
     list.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); openTaskModal(tasks.find(t => t.id === btn.dataset.edit)); }));
     list.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); confirmDelete(btn.dataset.delete); }));
     list.querySelectorAll('[data-approve]').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); openApprovalModal(tasks.find(t => t.id === btn.dataset.approve)); }));
+    list.querySelectorAll('[data-unapprove]').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); confirmUnapprove(btn.dataset.unapprove); }));
   }
 
   function taskHTML(t) {
     const dayStr = t.days && t.days.length ? t.days.map(d => DAYS[d]).join(' ') : 'Today only';
     const statusPill = t.approvalStatus !== 'none' ? `<span class="pill pill-${t.approvalStatus === 'approved' ? 'approved' : 'pending'}">${t.approvalStatus}</span>` : '';
-    const canEdit = t.approvalStatus !== 'approved';
+    const isApproved = t.approvalStatus === 'approved';
+    const showLockBtn = friends.length > 0 && t.approvalStatus !== 'pending' && !isApproved;
     return `
       <div class="manage-item">
         <div class="manage-item-row">
@@ -59,8 +61,9 @@ export function render(container) {
             <div class="manage-item-meta">${dayStr}</div>
           </div>
           <div class="manage-item-actions">
-            ${friends.length > 0 && t.approvalStatus !== 'pending' ? `<button class="btn btn-sm btn-outline" data-approve="${t.id}">🔒</button>` : ''}
-            <button class="btn btn-sm btn-outline" data-edit="${t.id}" ${canEdit ? '' : 'disabled'}>Edit</button>
+            ${isApproved ? `<button class="btn btn-sm btn-outline" data-unapprove="${t.id}" title="Remove from pair score">Unlock</button>` : ''}
+            ${showLockBtn ? `<button class="btn btn-sm btn-outline" data-approve="${t.id}">🔒</button>` : ''}
+            <button class="btn btn-sm btn-outline" data-edit="${t.id}">Edit</button>
             <button class="btn btn-sm btn-danger" data-delete="${t.id}">Del</button>
           </div>
         </div>
@@ -138,21 +141,23 @@ export function render(container) {
       try {
         const payload = { name, points, days: Array.from(selectedDays) };
         if (isEdit) {
-          const updated = await api.tasks.update(task.id, payload);
+          const res = await api.tasks.update(task.id, payload);
           const idx = tasks.findIndex(t => t.id === task.id);
-          if (idx !== -1) tasks[idx] = updated.task;
+          if (idx !== -1) tasks[idx] = res.task;
+          modal.remove();
+          renderList();
+          showToast(res.wasApproved ? 'Task updated — approval reset, re-request to count in pair score' : 'Task updated');
         } else {
           const created = await api.tasks.create(payload);
           tasks.unshift(created.task);
+          modal.remove();
+          renderList();
+          const empty = container.querySelector('.empty');
+          if (empty) empty.remove();
+          const header = container.querySelector('.section-title');
+          if (header) header.textContent = `My Tasks (${tasks.length})`;
+          showToast('Task created');
         }
-        modal.remove();
-        renderList();
-        const empty = container.querySelector('.empty');
-        if (empty) empty.remove();
-        // Update count
-        const header = container.querySelector('.section-title');
-        if (header) header.textContent = `My Tasks (${tasks.length})`;
-        showToast(isEdit ? 'Task updated' : 'Task created');
       } catch (e) {
         errEl.textContent = e.message;
         btn.disabled = false;
@@ -189,6 +194,41 @@ export function render(container) {
         const header = container.querySelector('.section-title');
         if (header) header.textContent = `My Tasks (${tasks.length})`;
         showToast('Task deleted');
+      } catch (e) {
+        showToast(e.message);
+        modal.remove();
+      }
+    });
+  }
+
+  async function confirmUnapprove(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header"><span class="modal-title">Remove from Pair Score?</span></div>
+        <div class="modal-body">
+          <p style="color:var(--text2);margin-bottom:16px">"<strong>${escHtml(task.name)}</strong>" will be unapproved. Past pair score points for this task will be removed from the current goal period.</p>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-full" id="cancel-unapprove">Cancel</button>
+            <button class="btn btn-danger btn-full" id="confirm-unapprove">Unlock</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#cancel-unapprove').addEventListener('click', () => modal.remove());
+    modal.querySelector('#confirm-unapprove').addEventListener('click', async () => {
+      try {
+        const result = await api.tasks.unapprove(taskId);
+        const idx = tasks.findIndex(t => t.id === taskId);
+        if (idx !== -1) tasks[idx] = result.task;
+        modal.remove();
+        renderList();
+        showToast('Task unlocked — no longer counted in pair score');
       } catch (e) {
         showToast(e.message);
         modal.remove();
