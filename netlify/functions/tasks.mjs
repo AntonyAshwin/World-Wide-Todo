@@ -124,9 +124,19 @@ export default async (req, context) => {
 
     await Promise.all(taskCompletions.map(async ({ date, points: pts }) => {
       const dayKey = `daily:${userId}:${date}`;
-      const dayRec = await pStore.get(dayKey, { type: 'json' }) || { points: 0 };
-      await pStore.set(dayKey, JSON.stringify({ points: Math.max(0, dayRec.points - pts) }));
-      await cStore.delete(`completion:${userId}:${date}:${id}`);
+      const approvedDayKey = `approved_daily:${userId}:${date}`;
+      const [dayRec, approvedRec] = await Promise.all([
+        pStore.get(dayKey, { type: 'json' }),
+        pStore.get(approvedDayKey, { type: 'json' }),
+      ]);
+      const writes = [
+        pStore.set(dayKey, JSON.stringify({ points: Math.max(0, (dayRec?.points || 0) - pts) })),
+        cStore.delete(`completion:${userId}:${date}:${id}`),
+      ];
+      if (task.approvalStatus === 'approved' && approvedRec) {
+        writes.push(pStore.set(approvedDayKey, JSON.stringify({ points: Math.max(0, (approvedRec.points || 0) - pts) })));
+      }
+      await Promise.all(writes);
     }));
     await cStore.delete(tcKey);
 
@@ -148,31 +158,42 @@ export default async (req, context) => {
     const cStore = stores.completions();
     const pStore = stores.points();
     const compKey = `completion:${userId}:${todayStr}:${id}`;
-    const dayKey = `daily:${userId}:${todayStr}`;
 
     const existing = await cStore.get(compKey, { type: 'json' });
-    const dayRec = await pStore.get(dayKey, { type: 'json' }) || { points: 0 };
+    const dayKey = `daily:${userId}:${todayStr}`;
+    const approvedDayKey = `approved_daily:${userId}:${todayStr}`;
+    const [dayRec, approvedRec] = await Promise.all([
+      pStore.get(dayKey, { type: 'json' }),
+      pStore.get(approvedDayKey, { type: 'json' }),
+    ]);
+    const dayPts = (dayRec || { points: 0 }).points;
+    const approvedPts = (approvedRec || { points: 0 }).points;
+    const isApproved = task.approvalStatus === 'approved';
 
     if (existing) {
-      // Un-complete: deregister points
-      await cStore.delete(compKey);
-      await pStore.set(dayKey, JSON.stringify({ points: Math.max(0, dayRec.points - existing.points) }));
-      // Remove from task completion index
+      const writes = [
+        cStore.delete(compKey),
+        pStore.set(dayKey, JSON.stringify({ points: Math.max(0, dayPts - existing.points) })),
+      ];
+      if (isApproved) writes.push(pStore.set(approvedDayKey, JSON.stringify({ points: Math.max(0, approvedPts - existing.points) })));
       const tcKey = `task_completions:${id}`;
       const tcList = await cStore.get(tcKey, { type: 'json' }) || [];
-      await cStore.set(tcKey, JSON.stringify(tcList.filter(c => c.date !== todayStr)));
+      writes.push(cStore.set(tcKey, JSON.stringify(tcList.filter(c => c.date !== todayStr))));
+      await Promise.all(writes);
       return ok({ completed: false, points: task.points });
     } else {
-      // Complete: register points
       const comp = { taskId: id, userId, date: todayStr, points: task.points, completedAt: new Date().toISOString() };
-      await cStore.set(compKey, JSON.stringify(comp));
-      await pStore.set(dayKey, JSON.stringify({ points: dayRec.points + task.points }));
-      // Add to task completion index (for delete cleanup)
+      const writes = [
+        cStore.set(compKey, JSON.stringify(comp)),
+        pStore.set(dayKey, JSON.stringify({ points: dayPts + task.points })),
+      ];
+      if (isApproved) writes.push(pStore.set(approvedDayKey, JSON.stringify({ points: approvedPts + task.points })));
       const tcKey = `task_completions:${id}`;
       const tcList = await cStore.get(tcKey, { type: 'json' }) || [];
       if (!tcList.find(c => c.date === todayStr)) {
-        await cStore.set(tcKey, JSON.stringify([...tcList, { date: todayStr, points: task.points }]));
+        writes.push(cStore.set(tcKey, JSON.stringify([...tcList, { date: todayStr, points: task.points }])));
       }
+      await Promise.all(writes);
       return ok({ completed: true, points: task.points });
     }
   }

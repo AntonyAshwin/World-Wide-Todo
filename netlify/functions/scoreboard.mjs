@@ -2,7 +2,7 @@ import { stores, requireAuth, ok, err, corsHeaders, currentPeriodStart, periodDa
 
 async function sumPoints(userId, dates) {
   const pStore = stores.points();
-  const totals = await Promise.all(dates.map(d => pStore.get(`daily:${userId}:${d}`, { type: 'json' })));
+  const totals = await Promise.all(dates.map(d => pStore.get(`approved_daily:${userId}:${d}`, { type: 'json' })));
   return totals.reduce((sum, rec) => sum + (rec ? rec.points : 0), 0);
 }
 
