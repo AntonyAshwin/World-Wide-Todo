@@ -1,110 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#111827" />
-  <title>Ashwin's TODO</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#6C63FF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>TaskBoard</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
-<body data-view="today">
-
-  <!-- User picker (shown before app if no user selected) -->
-  <div id="userPicker" class="user-picker hidden">
-    <div class="user-picker-card">
-      <h1>Ashwin's TODO</h1>
-      <div id="userList" class="user-list"></div>
+<body>
+  <div id="app">
+    <div id="loading" class="splash">
+      <div class="splash-logo">TB</div>
     </div>
   </div>
-
-  <!-- Side nav -->
-  <div id="navBackdrop" class="nav-backdrop hidden"></div>
-  <nav id="sideNav" class="sidenav" aria-label="Main navigation">
-    <div class="sidenav-header">Ashwin's TODO</div>
-    <button class="nav-item active" data-view="today">📋 Today</button>
-    <button class="nav-item" data-view="tasks">✏️ Tasks</button>
-    <button class="nav-item" data-view="stats">📊 Stats</button>
-    <button class="nav-item" data-view="settings">⚙️ Settings</button>
-    <button class="nav-item" data-view="history">📅 History</button>
-    <div class="sidenav-footer">
-      <button id="switchUserBtn" class="nav-item switch-user-btn">
-        👤 <span id="currentUserLabel"></span>
-      </button>
-    </div>
-  </nav>
-
-  <header class="app-header">
-    <div class="header-row">
-      <h1 id="title">Today</h1>
-    </div>
-    <div class="subrow">
-      <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-      <div class="date" id="date"></div>
-      <div class="lifetime" id="lifetime" aria-live="polite">⭐ 0 total</div>
-    </div>
-    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
-    <div class="sync" id="sync"></div>
-  </header>
-
-  <main>
-    <div id="view-today">
-      <ul id="taskList" class="task-list"></ul>
-      <p id="empty" class="empty hidden">No tasks today. Tap + to add one.</p>
-    </div>
-
-    <div id="view-history" class="hidden">
-      <div id="historyContent"></div>
-    </div>
-
-    <div id="view-tasks" class="hidden">
-      <div id="tasksContent"></div>
-    </div>
-
-    <div id="view-stats" class="hidden">
-      <div id="statsContent"></div>
-    </div>
-
-    <div id="view-settings" class="hidden">
-      <div id="settingsContent"></div>
-    </div>
-  </main>
-
-  <button id="addBtn" class="fab" aria-label="Add task">+</button>
-
-  <!-- Add task sheet -->
-  <div id="sheetBackdrop" class="backdrop hidden"></div>
-  <div id="sheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="Add task">
-    <h2>New task</h2>
-    <label>
-      Name
-      <input id="f-name" type="text" placeholder="e.g. Drink water" autocomplete="off" />
-    </label>
-    <label>
-      Points
-      <input id="f-points" type="number" min="0" step="1" value="1" inputmode="numeric" />
-    </label>
-    <div class="field-label">Days</div>
-    <div id="weekdayPicker" class="weekdays"></div>
-    <label class="switch-row">
-      <span>Recurring <small>(repeat every week)</small></span>
-      <input id="f-recur" type="checkbox" class="switch" checked />
-    </label>
-    <div class="sheet-actions">
-      <button id="cancelBtn" class="btn btn-ghost">Cancel</button>
-      <button id="saveBtn" class="btn btn-primary">Add task</button>
-    </div>
-  </div>
-
-  <!-- Confirm popup -->
-  <div id="confirmBackdrop" class="backdrop hidden"></div>
-  <div id="confirmPopup" class="confirm hidden" role="dialog" aria-modal="true" aria-label="Confirm">
-    <p id="confirmText">Delete this task?</p>
-    <div class="confirm-actions">
-      <button id="confirmNo" class="icon-btn no" aria-label="Cancel">✕</button>
-      <button id="confirmYes" class="icon-btn yes" aria-label="Confirm">✓</button>
-    </div>
-  </div>
-
-  <script type="module" src="app.js"></script>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>

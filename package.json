@@ -1,8 +1,7 @@
 {
-  "name": "ashwins-todo",
+  "name": "taskboard",
   "version": "1.0.0",
-  "private": true,
-  "description": "Mobile daily task tracker with points, backed by Netlify Blobs",
+  "type": "module",
   "dependencies": {
     "@netlify/blobs": "^8.1.0"
   }

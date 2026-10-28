@@ -1,57 +1,54 @@
-import { state, updateState } from './state.js';
-import { getUser } from './auth.js';
+const BASE = '/api';
+let _token = null;
 
-const API = "/api/state";
-let saveTimer = null;
+export function setToken(t) { _token = t; }
+export function getToken() { return _token; }
 
-function apiUrl()   { return `${API}?user=${encodeURIComponent(getUser())}`; }
-function cacheKey() { return `Ashwin's TODO.cache.${getUser()}`; }
-
-export function setSync(msg, err = false) {
-  const el = document.getElementById("sync");
-  el.textContent = msg;
-  el.classList.toggle("err", err);
+async function request(method, path, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (_token) headers['Authorization'] = `Bearer ${_token}`;
+  const res = await fetch(BASE + path, {
+    method,
+    headers,
+    body: body != null ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error || 'Request failed');
+  return data.data;
 }
 
-export function cache() {
-  try { localStorage.setItem(cacheKey(), JSON.stringify(state)); } catch {}
-}
-
-export async function loadState(render) {
-  try {
-    const raw = localStorage.getItem(cacheKey());
-    if (raw) { const d = JSON.parse(raw); updateState(d.tasks || [], d.done || {}, d.color || null); }
-  } catch {}
-  render();
-
-  try {
-    const res  = await fetch(apiUrl());
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-    updateState(data.tasks || [], data.done || {}, data.color || null);
-    cache();
-    render();
-    setSync("Synced ✓");
-  } catch {
-    setSync("Offline — using local copy", true);
-  }
-}
-
-export async function pushState() {
-  cache();
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    setSync("Saving…");
-    try {
-      const res = await fetch(apiUrl(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(state),
-      });
-      if (!res.ok) throw new Error(res.status);
-      setSync("Synced ✓");
-    } catch {
-      setSync("Save failed — will keep local copy", true);
-    }
-  }, 350);
-}
+export const api = {
+  auth: {
+    register: (username, password) => request('POST', '/auth/register', { username, password }),
+    login: (username, password) => request('POST', '/auth/login', { username, password }),
+    me: () => request('GET', '/auth/me'),
+  },
+  friends: {
+    list: () => request('GET', '/friends'),
+    request: (username) => request('POST', '/friends', { username }),
+    respond: (id, accept) => request('PUT', `/friends/${id}/respond`, { accept }),
+  },
+  tasks: {
+    list: () => request('GET', '/tasks'),
+    today: () => request('GET', '/tasks/today'),
+    create: (data) => request('POST', '/tasks', data),
+    update: (id, data) => request('PUT', `/tasks/${id}`, data),
+    delete: (id) => request('DELETE', `/tasks/${id}`),
+    complete: (id) => request('POST', `/tasks/${id}/complete`),
+    requestApproval: (id, data) => request('POST', `/tasks/${id}/request-approval`, data),
+    approveRespond: (approvalId, accept) => request('PUT', `/tasks/${approvalId}/approve`, { accept }),
+    pendingApprovals: () => request('GET', '/tasks/approvals'),
+  },
+  goals: {
+    list: () => request('GET', '/goals'),
+    propose: (data) => request('POST', '/goals', data),
+    respond: (id, accept) => request('PUT', `/goals/${id}/respond`, { accept }),
+  },
+  scoreboard: {
+    get: () => request('GET', '/scoreboard'),
+  },
+  notifications: {
+    list: () => request('GET', '/notifications'),
+    markRead: () => request('PUT', '/notifications'),
+  },
+};
