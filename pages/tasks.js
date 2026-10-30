@@ -36,7 +36,7 @@ export function render(container) {
       <div class="daily-bar">
         <div class="daily-bar-top">
           <span class="daily-points" id="daily-pts">${earned} pts</span>
-          <span class="daily-label">${pct}% of today</span>
+          <span class="daily-label" id="daily-label">${pct}% of today</span>
         </div>
         <div class="daily-track"><div class="daily-fill" id="daily-fill" style="width:${pct}%"></div></div>
       </div>
@@ -90,8 +90,10 @@ export function render(container) {
       const pct = totalPossible > 0 ? Math.min(100, Math.round((earned / totalPossible) * 100)) : 0;
       const ptsEl = container.querySelector('#daily-pts');
       const fillEl = container.querySelector('#daily-fill');
+      const labelEl = container.querySelector('#daily-label');
       if (ptsEl) ptsEl.textContent = `${earned} pts`;
       if (fillEl) fillEl.style.width = `${pct}%`;
+      if (labelEl) labelEl.textContent = `${pct}% of today`;
       renderTaskList();
       showToast(result.completed ? `+${result.points} pts earned!` : 'Points removed');
     } catch (e) {

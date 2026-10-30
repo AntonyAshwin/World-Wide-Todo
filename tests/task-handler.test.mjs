@@ -101,6 +101,29 @@ describe('POST /api/tasks/:id/complete — toggle', () => {
     expect(daily.points).toBe(0);
   });
 
+  it('self-heals: re-completing syncs task_completions when completion: key missing (partial corruption)', async () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const task = baseTask(); // points: 5
+    storeMap.tasks = createStore({ 'task:task1': task });
+    // Stale task_completions entry (points: 3) but no matching completion: key
+    storeMap.completions = createStore({
+      'task_completions:task1': [{ date: todayStr, points: 3, approvedPoints: 0 }],
+    });
+    storeMap.points = createStore();
+
+    const res = await handler(req('POST', 'task1', 'complete'), ctx('task1', 'complete'));
+    const body = await json(res);
+    expect(body.data.completed).toBe(true);
+
+    // task_completions updated with current task.points (5), not stale (3)
+    const tcList = storeMap.completions.peek('task_completions:task1');
+    expect(tcList).toHaveLength(1);
+    expect(tcList[0].points).toBe(5);
+
+    // completion: key created
+    expect(storeMap.completions.has(`completion:${USER_ID}:${todayStr}:task1`)).toBe(true);
+  });
+
   it('approved task also updates approved_daily', async () => {
     const task = baseTask({ approvalStatus: 'approved', approvedBy: 'friend1' });
     storeMap.tasks = createStore({ 'task:task1': task });

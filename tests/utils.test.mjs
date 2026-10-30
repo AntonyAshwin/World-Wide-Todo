@@ -35,6 +35,20 @@ describe('JWT', () => {
     expect(() => verifyToken(token)).toThrow('Token expired');
   });
 
+  it('wrong-length signature throws Invalid token, not TypeError', () => {
+    const token = createToken('user1');
+    const parts = token.split('.');
+    parts[2] = 'tooshort'; // shorter than the 43-char base64url HMAC-SHA256 sig
+    expect(() => verifyToken(parts.join('.'))).toThrow('Invalid token');
+  });
+
+  it('longer-than-expected signature throws Invalid token, not TypeError', () => {
+    const token = createToken('user1');
+    const parts = token.split('.');
+    parts[2] = parts[2] + 'AAAAAAAAAA'; // longer than expected
+    expect(() => verifyToken(parts.join('.'))).toThrow('Invalid token');
+  });
+
   it('malformed token throws', () => {
     expect(() => verifyToken('not.a.valid.token.parts')).toThrow();
     expect(() => verifyToken('')).toThrow('No token');
@@ -47,10 +61,12 @@ describe('password hash/verify', () => {
     expect(verifyPassword('secret123', hash, salt)).toBe(true);
   });
 
-  it('wrong password fails', () => {
+  it('wrong password returns false, does not throw', () => {
     const { hash, salt } = hashPassword('correct');
+    expect(() => verifyPassword('wrong', hash, salt)).not.toThrow();
     expect(verifyPassword('wrong', hash, salt)).toBe(false);
   });
+
 
   it('different salts produce different hashes', () => {
     const a = hashPassword('same');

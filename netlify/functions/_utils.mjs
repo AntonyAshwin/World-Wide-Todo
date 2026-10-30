@@ -16,7 +16,9 @@ export function verifyToken(token) {
   if (parts.length !== 3) throw new Error('Malformed token');
   const [header, body, sig] = parts;
   const expected = crypto.createHmac('sha256', SECRET).update(`${header}.${body}`).digest('base64url');
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) throw new Error('Invalid token');
+  const sigBuf = Buffer.from(sig);
+  const expectedBuf = Buffer.from(expected);
+  if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) throw new Error('Invalid token');
   const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
   if (payload.exp < Math.floor(Date.now() / 1000)) throw new Error('Token expired');
   return payload;
@@ -33,8 +35,8 @@ export function hashPassword(password) {
 }
 
 export function verifyPassword(password, hash, salt) {
-  const h = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
-  return h === hash;
+  const derived = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512');
+  return crypto.timingSafeEqual(derived, Buffer.from(hash, 'hex'));
 }
 
 export const stores = {

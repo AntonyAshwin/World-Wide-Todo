@@ -309,9 +309,11 @@ export default async (req, context) => {
 
       const tcKey = `task_completions:${id}`;
       const tcList = await cStore.get(tcKey, { type: 'json' }) || [];
-      if (!tcList.find(c => c.date === todayStr)) {
-        writes.push(cStore.set(tcKey, JSON.stringify([...tcList, { date: todayStr, points: task.points, approvedPoints: ap }])));
-      }
+      const newEntry = { date: todayStr, points: task.points, approvedPoints: ap };
+      const updatedList = tcList.some(c => c.date === todayStr)
+        ? tcList.map(c => c.date === todayStr ? newEntry : c)
+        : [...tcList, newEntry];
+      writes.push(cStore.set(tcKey, JSON.stringify(updatedList)));
       await Promise.all(writes);
       return ok({ completed: true, points: task.points });
     }
