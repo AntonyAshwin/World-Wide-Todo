@@ -6,9 +6,9 @@ const TOKEN_KEY = 'tb_token';
 const USER_KEY = 'tb_user';
 
 const NAV = [
-  { path: '/tasks', icon: iconToday(), label: 'Today' },
-  { path: '/manage', icon: iconManage(), label: 'Tasks' },
   { path: '/friends', icon: iconFriends(), label: 'Friends' },
+  { path: '/manage', icon: iconManage(), label: 'Tasks' },
+  { path: '/tasks', icon: iconToday(), label: 'Today' },
   { path: '/scoreboard', icon: iconScore(), label: 'Score' },
   { path: '/proposals', icon: iconBell(), label: 'Activity', badge: true },
 ];
