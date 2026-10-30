@@ -96,6 +96,8 @@ async function applyApprovedPoints(task, newPoints, pStore, cStore) {
   }));
 }
 
+export { cancelPendingApproval, removeApprovedPoints, applyApprovedPoints, taskAppearsToday };
+
 export default async (req, context) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders() });
 

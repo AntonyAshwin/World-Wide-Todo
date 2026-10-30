@@ -2,7 +2,14 @@
   "name": "taskboard",
   "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "dependencies": {
     "@netlify/blobs": "^8.1.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.12"
   }
 }
