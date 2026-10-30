@@ -30,11 +30,19 @@ export function render(container) {
       ${tasks.length === 0 ? `<div class="empty"><div class="empty-icon">${icons.clipboardList()}</div><div class="empty-text">No tasks yet</div></div>` : ''}
       <div style="height:96px"></div>
     `;
+    renderFabRow();
+    renderList();
+  }
 
-    // FAB row: [lock] [+]
-    const fabRow = document.createElement('div');
-    fabRow.id = 'fab-row';
-    fabRow.style.cssText = 'position:fixed;bottom:80px;right:16px;display:flex;gap:10px;align-items:center;z-index:100;';
+  function renderFabRow() {
+    let row = document.getElementById('fab-row');
+    if (!row) {
+      row = document.createElement('div');
+      row.id = 'fab-row';
+      row.style.cssText = 'position:fixed;bottom:80px;right:16px;display:flex;gap:10px;align-items:center;z-index:100;';
+      container.appendChild(row);
+    }
+    row.innerHTML = '';
 
     if (friends.length > 0 && tasks.some(t => t.approvalStatus === 'none')) {
       const approveBtn = document.createElement('button');
@@ -42,7 +50,7 @@ export function render(container) {
       approveBtn.style.cssText = 'width:52px;height:52px;border-radius:50%;background:var(--surface);border:1.5px solid var(--border);color:var(--text2);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18);opacity:0.4;pointer-events:none;transition:opacity .15s,border-color .15s;';
       approveBtn.innerHTML = icons.lock();
       approveBtn.addEventListener('click', openMultiApprovalModal);
-      fabRow.appendChild(approveBtn);
+      row.appendChild(approveBtn);
     }
 
     const fab = document.createElement('button');
@@ -50,10 +58,9 @@ export function render(container) {
     fab.id = 'manage-fab';
     fab.innerHTML = '+';
     fab.addEventListener('click', () => openTaskModal(null));
-    fabRow.appendChild(fab);
+    row.appendChild(fab);
 
-    container.appendChild(fabRow);
-    renderList();
+    updateApproveBtn();
   }
 
   function updateApproveBtn() {
@@ -199,7 +206,7 @@ export function render(container) {
         selectedIds.clear();
         modal.remove();
         renderList();
-        updateApproveBtn();
+        renderFabRow();
         showToast(failed === 0 ? `${succeeded} approval request${succeeded > 1 ? 's' : ''} sent` : `${succeeded} sent, ${failed} failed`);
       } catch (e) {
         errEl.textContent = e.message;
@@ -283,12 +290,14 @@ export function render(container) {
           if (idx !== -1) tasks[idx] = res.task;
           modal.remove();
           renderList();
+          renderFabRow();
           showToast(res.wasApproved ? 'Task updated — approval reset, re-request to count in pair score' : 'Task updated');
         } else {
           const created = await api.tasks.create(payload);
           tasks.unshift(created.task);
           modal.remove();
           renderList();
+          renderFabRow();
           const empty = container.querySelector('.empty');
           if (empty) empty.remove();
           const header = container.querySelector('.section-title');
@@ -329,7 +338,7 @@ export function render(container) {
         selectedIds.delete(taskId);
         modal.remove();
         renderList();
-        updateApproveBtn();
+        renderFabRow();
         const header = container.querySelector('.section-title');
         if (header) header.textContent = `My Tasks (${tasks.length})`;
         showToast('Task deleted');
@@ -367,6 +376,7 @@ export function render(container) {
         if (idx !== -1) tasks[idx] = result.task;
         modal.remove();
         renderList();
+        renderFabRow();
         showToast('Task unlocked — no longer counted in pair score');
       } catch (e) {
         showToast(e.message);

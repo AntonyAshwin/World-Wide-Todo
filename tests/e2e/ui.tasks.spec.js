@@ -142,3 +142,76 @@ test.describe('Story: Today bar — live percentage update', () => {
     await expect(page.locator('#daily-pts')).toHaveText('20 pts');
   });
 });
+
+// ── Story: Lock FAB appears after unlocking without reload ──────────────────────
+
+test.describe('Story: Lock FAB — appears without reload after unlock', () => {
+  test('lock FAB appears after unlocking an approved task — no reload needed', async ({ page, request }) => {
+    const id = uid();
+    const [a, b] = await Promise.all([
+      register(request, `alice${id}`),
+      register(request, `bob${id}`, 'pass1234'),
+    ]);
+    const u = authedReq(request, a.token);
+    const w = authedReq(request, b.token);
+
+    // Set up friendship
+    const fr = (await (await u.post('/api/friends', { username: b.user.username })).json()).data.friendship;
+    await w.put(`/api/friends/${fr.id}/respond`, { accept: true });
+
+    // Create task and get it approved (so lock FAB is hidden on load)
+    const task = (await (await u.post('/api/tasks', { name: 'Approved Task', points: 10, days: [] })).json()).data.task;
+    const approval = (await (await u.post(`/api/tasks/${task.id}/request-approval`, { approverId: b.user.id })).json()).data.approval;
+    await w.put(`/api/tasks/${approval.id}/approve`, { accept: true });
+
+    // Open manage page — all tasks are approved, so lock FAB should NOT exist
+    await loginPage(page, a.token, a.user);
+    await page.goto('/manage');
+    await page.waitForSelector('.manage-item', { timeout: 10_000 });
+
+    await expect(page.locator('#approve-fab')).toHaveCount(0);
+
+    // Unlock the task via the unlock icon button
+    await page.locator(`[data-unapprove="${task.id}"]`).click();
+
+    // Confirm in the dialog
+    await page.locator('#confirm-unapprove').click();
+
+    // Lock FAB must appear WITHOUT any navigation or reload
+    await expect(page.locator('#approve-fab')).toBeVisible({ timeout: 5_000 });
+  });
+
+  test('lock FAB disappears after all unapproved tasks are sent for approval', async ({ page, request }) => {
+    const id = uid();
+    const [a, b] = await Promise.all([
+      register(request, `carol${id}`),
+      register(request, `dan${id}`, 'pass1234'),
+    ]);
+    const u = authedReq(request, a.token);
+    const w = authedReq(request, b.token);
+
+    const fr = (await (await u.post('/api/friends', { username: b.user.username })).json()).data.friendship;
+    await w.put(`/api/friends/${fr.id}/respond`, { accept: true });
+
+    // Create a single unapproved task
+    await u.post('/api/tasks', { name: 'Unapproved Task', points: 5, days: [] });
+
+    await loginPage(page, a.token, a.user);
+    await page.goto('/manage');
+    await page.waitForSelector('.manage-item', { timeout: 10_000 });
+
+    // Lock FAB should be visible (unapproved task exists, friend exists)
+    await expect(page.locator('#approve-fab')).toBeVisible({ timeout: 5_000 });
+
+    // Select the task and send approval request via the FAB modal
+    await page.locator('.manage-item[data-selectable]').click();
+    await page.locator('#approve-fab').click();
+
+    // Select approver and send
+    await page.locator('#approver-select').selectOption({ label: `dan${id}` });
+    await page.locator('#send-approval-btn').click();
+
+    // After all tasks sent for approval, lock FAB must disappear
+    await expect(page.locator('#approve-fab')).toHaveCount(0, { timeout: 5_000 });
+  });
+});
