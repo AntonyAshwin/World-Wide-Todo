@@ -155,6 +155,8 @@ export default async (req, context) => {
 
     const { name, points, days } = await req.json();
     const wasApproved = task.approvalStatus === 'approved';
+    const oldPoints = task.points;
+    const newPoints = points ? parseInt(points) : task.points;
 
     if (wasApproved) {
       await removeApprovedPoints(task, pStore, cStore);
@@ -162,12 +164,30 @@ export default async (req, context) => {
 
     const validDays = Array.isArray(days) ? days.filter(d => d >= 0 && d <= 6) : task.days;
     task.name = name ? name.trim() : task.name;
-    task.points = points ? parseInt(points) : task.points;
+    task.points = newPoints;
     task.days = validDays;
     task.approvalStatus = 'none';
     task.approvedBy = null;
     task.activeApprovalId = null;
     task.updatedAt = new Date().toISOString();
+
+    // Sync today's completion record to match new task points (also heals pre-existing stale records)
+    const todayStr = today();
+    const compKey = `completion:${userId}:${todayStr}:${id}`;
+    const comp = await cStore.get(compKey, { type: 'json' });
+    if (comp && comp.points !== newPoints) {
+      const diff = newPoints - comp.points;
+      const dayKey = `daily:${userId}:${todayStr}`;
+      const dayRec = await pStore.get(dayKey, { type: 'json' }) || { points: 0 };
+      const tcKey = `task_completions:${id}`;
+      const tcList = await cStore.get(tcKey, { type: 'json' }) || [];
+      await Promise.all([
+        pStore.set(dayKey, JSON.stringify({ points: Math.max(0, dayRec.points + diff) })),
+        cStore.set(compKey, JSON.stringify({ ...comp, points: newPoints })),
+        cStore.set(tcKey, JSON.stringify(tcList.map(e => e.date === todayStr ? { ...e, points: newPoints } : e))),
+      ]);
+    }
+
     await tStore.set(`task:${id}`, JSON.stringify(task));
     return ok({ task, wasApproved });
   }
