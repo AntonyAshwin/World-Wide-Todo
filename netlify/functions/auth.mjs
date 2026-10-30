@@ -14,7 +14,7 @@ export default async (req, context) => {
 
       const store = stores.users();
       const existing = await store.get(`username:${username.toLowerCase()}`, { type: 'json' });
-      if (existing) return err('Username taken');
+      if (existing) return err('Username taken', 409);
 
       const userId = uid();
       const { hash, salt } = hashPassword(password);

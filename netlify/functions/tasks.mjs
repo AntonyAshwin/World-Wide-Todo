@@ -221,7 +221,7 @@ export default async (req, context) => {
     const task = await tStore.get(`task:${id}`, { type: 'json' });
     if (!task) return err('Not found', 404);
     if (task.userId !== userId) return err('Forbidden', 403);
-    if (task.approvalStatus !== 'approved') return err('Task is not approved');
+    if (task.approvalStatus !== 'approved') return err('Task is not approved', 409);
 
     await removeApprovedPoints(task, pStore, cStore);
     await tStore.set(`task:${id}`, JSON.stringify(task));
@@ -324,11 +324,12 @@ export default async (req, context) => {
     const task = await tStore.get(`task:${id}`, { type: 'json' });
     if (!task) return err('Not found', 404);
     if (task.userId !== userId) return err('Forbidden', 403);
-    if (task.approvalStatus === 'pending') return err('Approval request already pending');
+    if (task.approvalStatus === 'pending') return err('Approval request already pending', 409);
 
     const { approverId } = await req.json();
+    if (!approverId) return err('approverId required');
     const friends = await getAcceptedFriends(userId);
-    if (!friends.includes(approverId)) return err('Not a friend');
+    if (!friends.includes(approverId)) return err('Not a friend', 403);
 
     const approvalId = uid();
     const approval = {
@@ -357,7 +358,7 @@ export default async (req, context) => {
     const approval = await aStore.get(`approval:${id}`, { type: 'json' });
     if (!approval) return err('Not found', 404);
     if (approval.approverId !== userId) return err('Forbidden', 403);
-    if (approval.status !== 'pending') return err('Already responded');
+    if (approval.status !== 'pending') return err('Already responded', 409);
 
     const { accept } = await req.json();
     approval.status = accept ? 'approved' : 'rejected';

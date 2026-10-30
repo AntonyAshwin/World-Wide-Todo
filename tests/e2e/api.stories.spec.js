@@ -580,4 +580,70 @@ test.describe('Story: Edge Cases', () => {
     const tasks = await j(await request.get('/api/tasks'));
     expect(tasks.success).toBe(false);
   });
+
+  // ── Error codes and conflict states ────────────────────────────────────────
+  test('duplicate username registration returns 409', async ({ request }) => {
+    const name = `dupe${uid()}`;
+    await register(request, name);
+    const res = await request.post('/api/auth/register', {
+      data: { username: name, password: 'pass1234' },
+    });
+    expect(res.status()).toBe(409);
+    const body = await res.json();
+    expect(body.error).toBe('Username taken');
+  });
+
+  test('friend request to nonexistent user returns 404', async ({ request }) => {
+    const a = await register(request, `a${uid()}`);
+    const u = api(request, a.token);
+    const res = await u.post('/api/friends', { username: `noexist${uid()}` });
+    expect(res.status()).toBe(404);
+  });
+
+  test('duplicate friend request returns 409', async ({ request }) => {
+    const a = await register(request, `a${uid()}`);
+    const b = await register(request, `b${uid()}`);
+    const u = api(request, a.token);
+    await u.post('/api/friends', { username: b.user.username });
+    const dup = await u.post('/api/friends', { username: b.user.username });
+    expect(dup.status()).toBe(409);
+  });
+
+  test('double-respond to friend request returns 409', async ({ request }) => {
+    const a = await register(request, `a${uid()}`);
+    const b = await register(request, `b${uid()}`);
+    const ua = api(request, a.token);
+    const ub = api(request, b.token);
+    const fr = await j(await ua.post('/api/friends', { username: b.user.username }));
+    const fid = fr.data.friendship.id;
+    await ub.put(`/api/friends/${fid}/respond`, { accept: true });
+    const dup = await ub.put(`/api/friends/${fid}/respond`, { accept: false });
+    expect(dup.status()).toBe(409);
+  });
+
+  test('propose goal with invalid friendshipId returns 404', async ({ request }) => {
+    const a = await register(request, `a${uid()}`);
+    const u = api(request, a.token);
+    const res = await u.post('/api/goals', {
+      friendshipId: '00000000-0000-0000-0000-000000000000',
+      targetPoints: 100,
+      period: '1w',
+    });
+    expect(res.status()).toBe(404);
+  });
+
+  test('double-respond to goal proposal returns 409', async ({ request }) => {
+    const a = await register(request, `a${uid()}`);
+    const b = await register(request, `b${uid()}`);
+    const ua = api(request, a.token);
+    const ub = api(request, b.token);
+    const fr = await j(await ua.post('/api/friends', { username: b.user.username }));
+    const fid = fr.data.friendship.id;
+    await ub.put(`/api/friends/${fid}/respond`, { accept: true });
+    const g = await j(await ua.post('/api/goals', { friendshipId: fid, targetPoints: 50, period: '1w' }));
+    const gid = g.data.goal.id;
+    await ub.put(`/api/goals/${gid}/respond`, { accept: true });
+    const dup = await ub.put(`/api/goals/${gid}/respond`, { accept: false });
+    expect(dup.status()).toBe(409);
+  });
 });

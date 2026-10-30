@@ -47,7 +47,7 @@ export default async (req, context) => {
     if (!username) return err('Username required');
 
     const lookup = await userStore.get(`username:${username.toLowerCase()}`, { type: 'json' });
-    if (!lookup) return err('User not found');
+    if (!lookup) return err('User not found', 404);
     if (lookup.userId === userId) return err('Cannot add yourself');
 
     const receiverId = lookup.userId;
@@ -56,7 +56,7 @@ export default async (req, context) => {
       (f.requesterId === userId && f.receiverId === receiverId) ||
       (f.requesterId === receiverId && f.receiverId === userId)
     );
-    if (alreadyExists) return err('Friend request already exists');
+    if (alreadyExists) return err('Friend request already exists', 409);
 
     const fid = uid();
     const friendship = {
@@ -80,13 +80,12 @@ export default async (req, context) => {
     const friendship = await store.get(`friendship:${id}`, { type: 'json' });
     if (!friendship) return err('Not found', 404);
     if (friendship.receiverId !== userId) return err('Forbidden', 403);
-    if (friendship.status !== 'pending') return err('Already responded');
+    if (friendship.status !== 'pending') return err('Already responded', 409);
 
     friendship.status = accept ? 'accepted' : 'rejected';
     friendship.updatedAt = new Date().toISOString();
     await store.set(`friendship:${id}`, JSON.stringify(friendship));
 
-    const requesterInfo = await userStore.get(`user:${friendship.requesterId}`, { type: 'json' });
     await addNotification(friendship.requesterId, 'friend_response', {
       friendshipId: id,
       fromUsername: caller.username,

@@ -55,7 +55,7 @@ export default async (req, context) => {
 
     const fStore = stores.friendships();
     const friendship = await fStore.get(`friendship:${friendshipId}`, { type: 'json' });
-    if (!friendship || friendship.status !== 'accepted') return err('Friendship not found');
+    if (!friendship || friendship.status !== 'accepted') return err('Friendship not found', 404);
     if (friendship.requesterId !== userId && friendship.receiverId !== userId) return err('Forbidden', 403);
 
     const otherId = friendship.requesterId === userId ? friendship.receiverId : friendship.requesterId;
@@ -75,7 +75,6 @@ export default async (req, context) => {
     const gIds = await gStore.get(`friendship_goals:${friendshipId}`, { type: 'json' }) || [];
     await gStore.set(`friendship_goals:${friendshipId}`, JSON.stringify([...gIds, goalId]));
 
-    const otherUser = await stores.users().get(`user:${otherId}`, { type: 'json' });
     await addNotification(otherId, 'goal_proposal', {
       goalId,
       friendshipId,
@@ -93,10 +92,10 @@ export default async (req, context) => {
 
     const fStore = stores.friendships();
     const friendship = await fStore.get(`friendship:${goal.friendshipId}`, { type: 'json' });
-    const otherId = friendship.requesterId === userId ? friendship.receiverId : friendship.requesterId;
+    if (!friendship) return err('Friendship not found', 404);
     if (friendship.requesterId !== userId && friendship.receiverId !== userId) return err('Forbidden', 403);
-    if (goal.proposerId === userId) return err('Cannot respond to your own proposal');
-    if (goal.status !== 'pending') return err('Already responded');
+    if (goal.proposerId === userId) return err('Cannot respond to your own proposal', 403);
+    if (goal.status !== 'pending') return err('Already responded', 409);
 
     const { accept } = await req.json();
     goal.status = accept ? 'accepted' : 'rejected';

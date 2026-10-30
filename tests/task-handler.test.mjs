@@ -262,7 +262,49 @@ describe('DELETE /api/tasks/:id', () => {
   });
 });
 
-// ── GET /api/tasks/approvals — ownerUsername enrichment (bug fix) ─────────────
+// ── error codes ───────────────────────────────────────────────────────────────
+
+describe('error codes — conflict and validation', () => {
+  it('unapprove a non-approved task returns 409', async () => {
+    const task = baseTask({ approvalStatus: 'none' });
+    storeMap.tasks = createStore({ 'task:task1': task });
+
+    const res = await handler(req('POST', 'task1', 'unapprove'), ctx('task1', 'unapprove'));
+    expect(res.status).toBe(409);
+  });
+
+  it('request-approval with missing approverId returns 400', async () => {
+    const task = baseTask({ approvalStatus: 'none' });
+    storeMap.tasks = createStore({ 'task:task1': task });
+
+    const res = await handler(req('POST', 'task1', 'request-approval', {}), ctx('task1', 'request-approval'));
+    expect(res.status).toBe(400);
+    const body = await json(res);
+    expect(body.error).toMatch(/approverId/i);
+  });
+
+  it('request-approval when already pending returns 409', async () => {
+    const task = baseTask({ approvalStatus: 'pending', activeApprovalId: 'appr-existing' });
+    storeMap.tasks = createStore({ 'task:task1': task });
+
+    const res = await handler(req('POST', 'task1', 'request-approval', { approverId: 'friend1' }), ctx('task1', 'request-approval'));
+    expect(res.status).toBe(409);
+  });
+
+  it('approve already-responded approval returns 409', async () => {
+    storeMap.approvals = createStore({
+      'approval:appr1': {
+        id: 'appr1', taskId: 'task1', taskOwnerId: 'owner1', approverId: USER_ID,
+        type: 'create', pendingName: 'Run', pendingPoints: 5, pendingDays: [],
+        status: 'approved',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      },
+    });
+
+    const res = await handler(req('PUT', 'appr1', 'approve', { accept: true }), ctx('appr1', 'approve'));
+    expect(res.status).toBe(409);
+  });
+});
 
 describe('GET /api/tasks/approvals', () => {
   it('returns empty array when no pending approvals', async () => {
