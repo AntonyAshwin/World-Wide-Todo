@@ -5,7 +5,10 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:unit": "vitest run",
+    "test:ui": "playwright test tests/e2e/ui.*.spec.js",
+    "test:e2e": "playwright test",
+    "test:all": "vitest run && playwright test"
   },
   "dependencies": {
     "@netlify/blobs": "^8.1.0"
