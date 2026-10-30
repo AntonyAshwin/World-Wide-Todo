@@ -4,12 +4,14 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@netlify/blobs": "^8.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "vitest": "^4.1.12"
   }
 }
