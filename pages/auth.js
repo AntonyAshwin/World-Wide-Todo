@@ -6,7 +6,7 @@ export function render(container) {
 
   container.innerHTML = `
     <div class="auth-page">
-      <div class="auth-logo">TaskBoard</div>
+      <div class="auth-logo">Goals</div>
       <div class="auth-tagline">Compete. Complete. Repeat.</div>
       <div class="auth-form">
         <div class="auth-tabs">
