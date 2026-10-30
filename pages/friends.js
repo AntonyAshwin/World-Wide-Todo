@@ -81,17 +81,19 @@ export function render(container) {
   function pendingHTML(f) {
     const u = f.otherUser;
     if (!u) return '';
+    const isSentByMe = f.requesterId === state.user?.id;
     return `
       <div class="friend-item">
         <div class="friend-avatar">${u.username[0].toUpperCase()}</div>
         <div style="flex:1">
           <div class="friend-name">@${escHtml(u.username)}</div>
-          <div class="friend-status">${f.requesterId ? 'Request sent' : 'Wants to connect'}</div>
+          <div class="friend-status">${isSentByMe ? 'Request sent' : 'Wants to connect'}</div>
         </div>
+        ${!isSentByMe ? `
         <div class="friend-actions">
           <button class="btn btn-sm btn-success" data-accept="${f.id}">✓</button>
           <button class="btn btn-sm btn-danger" data-reject="${f.id}">✕</button>
-        </div>
+        </div>` : ''}
       </div>
     `;
   }

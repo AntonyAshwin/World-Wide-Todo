@@ -16,13 +16,14 @@ describe('cancelPendingApproval()', () => {
     // nothing threw, store untouched
   });
 
-  it('marks approval cancelled and removes from pending list', async () => {
+  it('marks approval cancelled and deletes individual pending-approval key', async () => {
     const approvalId = 'appr1';
     const aStore = createStore({
       [`approval:${approvalId}`]: {
         id: approvalId, status: 'pending', approverId: 'friend1',
       },
-      'pending_approvals:friend1': ['appr1', 'appr2'],
+      'pending_approval:friend1:appr1': '1',
+      'pending_approval:friend1:appr2': '1',
     });
     const task = { activeApprovalId: approvalId };
     await cancelPendingApproval(task, aStore);
@@ -30,16 +31,16 @@ describe('cancelPendingApproval()', () => {
     const approval = aStore.peek(`approval:${approvalId}`);
     expect(approval.status).toBe('cancelled');
 
-    const pending = aStore.peek('pending_approvals:friend1');
-    expect(pending).not.toContain(approvalId);
-    expect(pending).toContain('appr2'); // other approval untouched
+    // individual key deleted
+    expect(aStore.has('pending_approval:friend1:appr1')).toBe(false);
+    // other approval key untouched
+    expect(aStore.has('pending_approval:friend1:appr2')).toBe(true);
   });
 
   it('no-ops when approval is already not pending', async () => {
     const approvalId = 'appr3';
     const aStore = createStore({
       [`approval:${approvalId}`]: { id: approvalId, status: 'approved', approverId: 'friend1' },
-      'pending_approvals:friend1': [],
     });
     const task = { activeApprovalId: approvalId };
     await cancelPendingApproval(task, aStore);

@@ -39,7 +39,7 @@ export function render(container) {
             <span>${escHtml(b.friend.username)}</span>
           </div>
           <div style="text-align:center;color:var(--text3);font-size:13px;padding:8px 0">
-            No goal set yet — go to Activity to propose one
+            No goal set yet — go to Friends to propose one
           </div>
         </div>
       `;

@@ -16,10 +16,18 @@ export function createStore(initial = {}) {
       data.set(key, typeof value === 'string' ? value : JSON.stringify(value));
     },
     async delete(key) { data.delete(key); },
+    async list({ prefix = '' } = {}) {
+      const blobs = [];
+      for (const key of data.keys()) {
+        if (key.startsWith(prefix)) blobs.push({ key });
+      }
+      return { blobs };
+    },
     // Sync helper for assertions in tests
     peek(key) {
       const raw = data.get(key);
       return raw ? JSON.parse(raw) : null;
     },
+    has(key) { return data.has(key); },
   };
 }

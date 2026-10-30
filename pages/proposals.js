@@ -53,7 +53,7 @@ export function render(container) {
     const daysStr = a.pendingDays && a.pendingDays.length ? a.pendingDays.map(d => dayNames[d]).join(', ') : 'Today only';
     return `
       <div class="card">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${a.type === 'edit' ? 'Edit request' : 'New task'} from someone</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${a.type === 'edit' ? 'Edit request' : 'New task'} from ${a.ownerUsername ? `<strong>@${escHtml(a.ownerUsername)}</strong>` : 'someone'}</div>
         <div style="font-size:16px;font-weight:700;margin-bottom:2px">${escHtml(a.pendingName)}</div>
         <div style="font-size:13px;color:var(--text3)">${a.pendingPoints} pts · ${daysStr}</div>
         <div style="display:flex;gap:8px;margin-top:12px">

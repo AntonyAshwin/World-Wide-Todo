@@ -23,7 +23,7 @@ function taskAppearsToday(task) {
   return task.createdAt.split('T')[0] === today();
 }
 
-// Cancels a pending approval: marks it 'cancelled', removes from approver's pending list.
+// Cancels a pending approval: marks it 'cancelled', deletes the individual pending-approval key.
 // Called on edit or delete when task.approvalStatus === 'pending'.
 async function cancelPendingApproval(task, aStore) {
   if (!task.activeApprovalId) return;
@@ -31,11 +31,9 @@ async function cancelPendingApproval(task, aStore) {
   if (!approval || approval.status !== 'pending') return;
   approval.status = 'cancelled';
   approval.updatedAt = new Date().toISOString();
-  const pKey = `pending_approvals:${approval.approverId}`;
-  const pList = await aStore.get(pKey, { type: 'json' }) || [];
   await Promise.all([
     aStore.set(`approval:${task.activeApprovalId}`, JSON.stringify(approval)),
-    aStore.set(pKey, JSON.stringify(pList.filter(id => id !== task.activeApprovalId))),
+    aStore.delete(`pending_approval:${approval.approverId}:${task.activeApprovalId}`),
   ]);
 }
 
@@ -129,11 +127,16 @@ export default async (req, context) => {
 
   // GET /api/tasks/approvals
   if (method === 'GET' && id === 'approvals') {
-    const pKey = `pending_approvals:${userId}`;
-    const pList = await aStore.get(pKey, { type: 'json' }) || [];
-    if (!pList.length) return ok({ approvals: [] });
-    const approvals = (await Promise.all(pList.map(aid => aStore.get(`approval:${aid}`, { type: 'json' }))))
+    const { blobs } = await aStore.list({ prefix: `pending_approval:${userId}:` });
+    if (!blobs.length) return ok({ approvals: [] });
+    const approvalIds = blobs.map(b => b.key.split(':').pop());
+    const raw = (await Promise.all(approvalIds.map(aid => aStore.get(`approval:${aid}`, { type: 'json' }))))
       .filter(a => a && a.status === 'pending');
+    const uStore = stores.users();
+    const approvals = await Promise.all(raw.map(async a => {
+      const owner = await uStore.get(`user:${a.taskOwnerId}`, { type: 'json' });
+      return { ...a, ownerUsername: owner?.username || null };
+    }));
     return ok({ approvals });
   }
 
@@ -339,9 +342,7 @@ export default async (req, context) => {
     task.activeApprovalId = approvalId;
     await tStore.set(`task:${id}`, JSON.stringify(task));
 
-    const pKey = `pending_approvals:${approverId}`;
-    const pList = await aStore.get(pKey, { type: 'json' }) || [];
-    await aStore.set(pKey, JSON.stringify([...pList, approvalId]));
+    await aStore.set(`pending_approval:${approverId}:${approvalId}`, '1');
 
     await addNotification(approverId, 'task_approval_request', {
       approvalId, taskName: task.name, fromUsername: username,
@@ -380,9 +381,7 @@ export default async (req, context) => {
       await tStore.set(`task:${approval.taskId}`, JSON.stringify(task));
     }
 
-    const pKey = `pending_approvals:${userId}`;
-    const pList = await aStore.get(pKey, { type: 'json' }) || [];
-    await aStore.set(pKey, JSON.stringify(pList.filter(aid => aid !== id)));
+    await aStore.delete(`pending_approval:${userId}:${id}`);
 
     await addNotification(approval.taskOwnerId, 'task_approval_response', {
       approvalId: id, taskName: approval.pendingName, accepted: accept, fromUsername: username,

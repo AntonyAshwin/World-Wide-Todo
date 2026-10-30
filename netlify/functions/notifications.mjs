@@ -8,17 +8,23 @@ export default async (req, context) => {
 
   const { userId } = caller;
   const store = stores.notifications();
-  const key = `notifs:${userId}`;
 
   if (req.method === 'GET') {
-    const notifs = await store.get(key, { type: 'json' }) || [];
+    const { blobs } = await store.list({ prefix: `notif:${userId}:` });
+    if (!blobs.length) return ok({ notifications: [] });
+    const notifs = (await Promise.all(blobs.map(b => store.get(b.key, { type: 'json' }))))
+      .filter(Boolean)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 100);
     return ok({ notifications: notifs });
   }
 
   if (req.method === 'PUT') {
-    const notifs = await store.get(key, { type: 'json' }) || [];
-    const updated = notifs.map(n => ({ ...n, read: true }));
-    await store.set(key, JSON.stringify(updated));
+    const { blobs } = await store.list({ prefix: `notif:${userId}:` });
+    await Promise.all(blobs.map(async b => {
+      const n = await store.get(b.key, { type: 'json' });
+      if (n && !n.read) await store.set(b.key, JSON.stringify({ ...n, read: true }));
+    }));
     return ok({ updated: true });
   }
 

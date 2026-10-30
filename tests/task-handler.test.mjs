@@ -126,7 +126,7 @@ describe('PUT /api/tasks/:id — edit', () => {
       [`approval:${approvalId}`]: {
         id: approvalId, status: 'pending', approverId: 'friend1',
       },
-      'pending_approvals:friend1': [approvalId],
+      'pending_approval:friend1:appr1': '1',
     });
 
     const res = await handler(
@@ -139,8 +139,7 @@ describe('PUT /api/tasks/:id — edit', () => {
     const approval = storeMap.approvals.peek(`approval:${approvalId}`);
     expect(approval.status).toBe('cancelled');
 
-    const pending = storeMap.approvals.peek('pending_approvals:friend1');
-    expect(pending).not.toContain(approvalId);
+    expect(storeMap.approvals.has('pending_approval:friend1:appr1')).toBe(false);
   });
 
   it('resets approvalStatus to none when editing approved task', async () => {
@@ -192,7 +191,7 @@ describe('DELETE /api/tasks/:id', () => {
       [`approval:${approvalId}`]: {
         id: approvalId, status: 'pending', approverId: 'friend1',
       },
-      'pending_approvals:friend1': [approvalId],
+      'pending_approval:friend1:appr2': '1',
     });
 
     const res = await handler(req('DELETE', 'task1'), ctx('task1'));
@@ -201,6 +200,7 @@ describe('DELETE /api/tasks/:id', () => {
 
     const approval = storeMap.approvals.peek(`approval:${approvalId}`);
     expect(approval.status).toBe('cancelled');
+    expect(storeMap.approvals.has('pending_approval:friend1:appr2')).toBe(false);
   });
 
   it('removes task from user_tasks index', async () => {
@@ -236,5 +236,84 @@ describe('DELETE /api/tasks/:id', () => {
 
     const daily = storeMap.points.peek(`daily:${USER_ID}:${todayStr}`);
     expect(daily.points).toBe(0);
+  });
+});
+
+// ── GET /api/tasks/approvals — ownerUsername enrichment (bug fix) ─────────────
+
+describe('GET /api/tasks/approvals', () => {
+  it('returns empty array when no pending approvals', async () => {
+    storeMap.approvals = createStore(); // no pending_approval: keys
+    const res = await handler(req('GET', 'approvals', undefined), ctx('approvals'));
+    const body = await json(res);
+    expect(body.data.approvals).toEqual([]);
+  });
+
+  it('enriches approvals with ownerUsername', async () => {
+    const approvalId = 'appr-enrich';
+    storeMap.users = createStore({
+      [`user:${USER_ID}`]: { id: USER_ID, username: 'alice' },
+      'user:owner1': { id: 'owner1', username: 'bob' },
+    });
+    storeMap.approvals = createStore({
+      [`pending_approval:${USER_ID}:${approvalId}`]: '1',
+      [`approval:${approvalId}`]: {
+        id: approvalId, taskId: 'task1', taskOwnerId: 'owner1', approverId: USER_ID,
+        type: 'create', pendingName: 'Run', pendingPoints: 10, pendingDays: [],
+        status: 'pending',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      },
+    });
+
+    const res = await handler(req('GET', 'approvals', undefined), ctx('approvals'));
+    const body = await json(res);
+    expect(res.status).toBe(200);
+    expect(body.data.approvals).toHaveLength(1);
+    expect(body.data.approvals[0].ownerUsername).toBe('bob');
+    expect(body.data.approvals[0].taskId).toBe('task1');
+  });
+
+  it('filters out non-pending approvals', async () => {
+    const a1 = 'appr-pending';
+    const a2 = 'appr-cancelled';
+    storeMap.users = createStore({
+      [`user:${USER_ID}`]: { id: USER_ID, username: 'alice' },
+      'user:owner1': { id: 'owner1', username: 'bob' },
+    });
+    storeMap.approvals = createStore({
+      [`pending_approval:${USER_ID}:${a1}`]: '1',
+      [`pending_approval:${USER_ID}:${a2}`]: '1',
+      [`approval:${a1}`]: {
+        id: a1, taskOwnerId: 'owner1', approverId: USER_ID, status: 'pending',
+        type: 'create', pendingName: 'Run', pendingPoints: 5, pendingDays: [],
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      },
+      [`approval:${a2}`]: {
+        id: a2, taskOwnerId: 'owner1', approverId: USER_ID, status: 'cancelled',
+        type: 'create', pendingName: 'Walk', pendingPoints: 3, pendingDays: [],
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      },
+    });
+
+    const res = await handler(req('GET', 'approvals', undefined), ctx('approvals'));
+    const body = await json(res);
+    expect(body.data.approvals).toHaveLength(1);
+    expect(body.data.approvals[0].id).toBe(a1);
+  });
+
+  it('handles missing owner user gracefully (ownerUsername null)', async () => {
+    const approvalId = 'appr-ghost';
+    storeMap.approvals = createStore({
+      [`pending_approval:${USER_ID}:${approvalId}`]: '1',
+      [`approval:${approvalId}`]: {
+        id: approvalId, taskOwnerId: 'deleted-user', approverId: USER_ID,
+        status: 'pending', type: 'create', pendingName: 'Run', pendingPoints: 5, pendingDays: [],
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      },
+    });
+
+    const res = await handler(req('GET', 'approvals', undefined), ctx('approvals'));
+    const body = await json(res);
+    expect(body.data.approvals[0].ownerUsername).toBeNull();
   });
 });

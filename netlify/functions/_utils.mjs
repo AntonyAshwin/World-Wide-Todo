@@ -85,10 +85,9 @@ export const today = () => new Date().toISOString().split('T')[0];
 
 export async function addNotification(userId, type, data) {
   const store = stores.notifications();
-  const key = `notifs:${userId}`;
-  const existing = await store.get(key, { type: 'json' }) || [];
-  const notif = { id: uid(), type, data, read: false, createdAt: new Date().toISOString() };
-  await store.set(key, JSON.stringify([notif, ...existing].slice(0, 100)));
+  const notifId = uid();
+  const notif = { id: notifId, type, data, read: false, createdAt: new Date().toISOString() };
+  await store.set(`notif:${userId}:${notifId}`, JSON.stringify(notif));
 }
 
 export function periodDates(period, startDate) {
