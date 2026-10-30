@@ -1,6 +1,7 @@
 import { api } from '../js/api.js';
 import { showToast } from '../app.js';
 import { navigate } from '../js/router.js';
+import { icons } from '../js/icons.js';
 
 const DAYS = ['S','M','T','W','T','F','S'];
 
@@ -17,7 +18,7 @@ export function render(container) {
       todayStr = data.date;
       renderPage();
     } catch (e) {
-      container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">${e.message}</div></div>`;
+      container.innerHTML = `<div class="empty"><div class="empty-icon">${icons.alertTriangle()}</div><div class="empty-text">${e.message}</div></div>`;
     }
   }
 
@@ -41,7 +42,7 @@ export function render(container) {
         <div class="daily-track"><div class="daily-fill" id="daily-fill" style="width:${pct}%"></div></div>
       </div>
       <div id="task-list"></div>
-      ${tasks.length === 0 ? `<div class="empty" style="padding-top:32px"><div class="empty-icon">📋</div><div class="empty-text">No tasks for today</div><div class="empty-sub">Tap "+ Add Task" to create one</div></div>` : ''}
+      ${tasks.length === 0 ? `<div class="empty" style="padding-top:32px"><div class="empty-icon">${icons.clipboardList()}</div><div class="empty-text">No tasks for today</div><div class="empty-sub">Tap "+ Add Task" to create one</div></div>` : ''}
     `;
 
     renderTaskList();

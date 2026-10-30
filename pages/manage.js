@@ -1,5 +1,6 @@
 import { api } from '../js/api.js';
 import { showToast } from '../app.js';
+import { icons } from '../js/icons.js';
 
 const DAYS = ['S','M','T','W','T','F','S'];
 
@@ -16,7 +17,7 @@ export function render(container) {
       friends = fd.friendships.filter(f => f.status === 'accepted');
       renderPage();
     } catch (e) {
-      container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">${e.message}</div></div>`;
+      container.innerHTML = `<div class="empty"><div class="empty-icon">${icons.alertTriangle()}</div><div class="empty-text">${e.message}</div></div>`;
     }
   }
 
@@ -26,11 +27,11 @@ export function render(container) {
         <span class="section-title">My Tasks (${tasks.length})</span>
       </div>
       <div id="manage-list"></div>
-      ${tasks.length === 0 ? `<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">No tasks yet</div></div>` : ''}
+      ${tasks.length === 0 ? `<div class="empty"><div class="empty-icon">${icons.clipboardList()}</div><div class="empty-text">No tasks yet</div></div>` : ''}
       <div style="height:96px"></div>
     `;
 
-    // FAB row: [🔒] [+]
+    // FAB row: [lock] [+]
     const fabRow = document.createElement('div');
     fabRow.id = 'fab-row';
     fabRow.style.cssText = 'position:fixed;bottom:80px;right:16px;display:flex;gap:10px;align-items:center;z-index:100;';
@@ -39,7 +40,7 @@ export function render(container) {
       const approveBtn = document.createElement('button');
       approveBtn.id = 'approve-fab';
       approveBtn.style.cssText = 'width:52px;height:52px;border-radius:50%;background:var(--surface);border:1.5px solid var(--border);color:var(--text2);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18);opacity:0.4;pointer-events:none;transition:opacity .15s,border-color .15s;';
-      approveBtn.innerHTML = '🔒';
+      approveBtn.innerHTML = icons.lock();
       approveBtn.addEventListener('click', openMultiApprovalModal);
       fabRow.appendChild(approveBtn);
     }
@@ -130,9 +131,9 @@ export function render(container) {
             <div class="manage-item-meta">${dayStr}</div>
           </div>
           <div class="manage-item-actions">
-            ${isApproved ? `<button class="btn btn-sm btn-outline" data-unapprove="${t.id}">Unlock</button>` : ''}
-            <button class="btn btn-sm btn-outline" data-edit="${t.id}">Edit</button>
-            <button class="btn btn-sm btn-danger" data-delete="${t.id}">Del</button>
+            ${isApproved ? `<button class="btn btn-sm btn-icon btn-outline" data-unapprove="${t.id}" title="Unlock">${icons.lockOpen()}</button>` : ''}
+            <button class="btn btn-sm btn-icon btn-outline" data-edit="${t.id}" title="Edit">${icons.pencil()}</button>
+            <button class="btn btn-sm btn-icon btn-danger" data-delete="${t.id}" title="Delete">${icons.trash()}</button>
           </div>
         </div>
       </div>
@@ -150,7 +151,7 @@ export function render(container) {
         <div class="modal-handle"></div>
         <div class="modal-header">
           <span class="modal-title">Request Approval (${selectedTasks.length})</span>
-          <button class="modal-close" id="close-modal">✕</button>
+          <button class="modal-close" id="close-modal">${icons.x()}</button>
         </div>
         <div class="modal-body">
           <div style="background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:16px;max-height:140px;overflow-y:auto">
@@ -219,7 +220,7 @@ export function render(container) {
         <div class="modal-handle"></div>
         <div class="modal-header">
           <span class="modal-title">${isEdit ? 'Edit Task' : 'New Task'}</span>
-          <button class="modal-close" id="close-modal">✕</button>
+          <button class="modal-close" id="close-modal">${icons.x()}</button>
         </div>
         <div class="modal-body">
           <div class="form-group">

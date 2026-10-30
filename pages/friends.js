@@ -1,5 +1,6 @@
 import { api } from '../js/api.js';
 import { showToast } from '../app.js';
+import { icons } from '../js/icons.js';
 import { state } from '../js/state.js';
 
 const PERIOD_LABELS = { '1w': '1 Week', '2w': '2 Weeks', '3w': '3 Weeks', '1m': '1 Month' };
@@ -16,7 +17,7 @@ export function render(container) {
       goalsData = gd.goals;
       renderPage();
     } catch (e) {
-      container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">${e.message}</div></div>`;
+      container.innerHTML = `<div class="empty"><div class="empty-icon">${icons.alertTriangle()}</div><div class="empty-text">${e.message}</div></div>`;
     }
   }
 
@@ -91,8 +92,8 @@ export function render(container) {
         </div>
         ${!isSentByMe ? `
         <div class="friend-actions">
-          <button class="btn btn-sm btn-success" data-accept="${f.id}">✓</button>
-          <button class="btn btn-sm btn-danger" data-reject="${f.id}">✕</button>
+          <button class="btn btn-sm btn-success" data-accept="${f.id}">${icons.check()}</button>
+          <button class="btn btn-sm btn-danger" data-reject="${f.id}">${icons.x()}</button>
         </div>` : ''}
       </div>
     `;
@@ -134,7 +135,7 @@ export function render(container) {
         <div class="modal-handle"></div>
         <div class="modal-header">
           <span class="modal-title">@${escHtml(u.username)}</span>
-          <button class="modal-close" id="close-modal">✕</button>
+          <button class="modal-close" id="close-modal">${icons.x()}</button>
         </div>
         <div class="modal-body">
           ${activeGoalHTML}
@@ -175,7 +176,7 @@ export function render(container) {
         <div class="modal-handle"></div>
         <div class="modal-header">
           <span class="modal-title">Propose Goal vs @${escHtml(friendship.otherUser?.username)}</span>
-          <button class="modal-close" id="close-modal">✕</button>
+          <button class="modal-close" id="close-modal">${icons.x()}</button>
         </div>
         <div class="modal-body">
           <div class="form-group">

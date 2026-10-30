@@ -1,5 +1,6 @@
 import { api } from '../js/api.js';
 import { state } from '../js/state.js';
+import { icons } from '../js/icons.js';
 
 const PERIOD_LABELS = { '1w': '1 Week', '2w': '2 Weeks', '3w': '3 Weeks', '1m': '1 Month' };
 
@@ -10,13 +11,13 @@ export function render(container) {
       const data = await api.scoreboard.get();
       renderPage(data.boards);
     } catch (e) {
-      container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">${e.message}</div></div>`;
+      container.innerHTML = `<div class="empty"><div class="empty-icon">${icons.alertTriangle()}</div><div class="empty-text">${e.message}</div></div>`;
     }
   }
 
   function renderPage(boards) {
     if (!boards.length) {
-      container.innerHTML = `<div class="empty" style="padding-top:64px"><div class="empty-icon">🏆</div><div class="empty-text">No scoreboard yet</div><div class="empty-sub">Add friends and set a goal to compete</div></div>`;
+      container.innerHTML = `<div class="empty" style="padding-top:64px"><div class="empty-icon">${icons.trophy()}</div><div class="empty-text">No scoreboard yet</div><div class="empty-sub">Add friends and set a goal to compete</div></div>`;
       return;
     }
 

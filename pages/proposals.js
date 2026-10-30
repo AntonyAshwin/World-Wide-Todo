@@ -1,5 +1,6 @@
 import { api } from '../js/api.js';
 import { showToast } from '../app.js';
+import { icons } from '../js/icons.js';
 
 const PERIOD_LABELS = { '1w': '1 Week', '2w': '2 Weeks', '3w': '3 Weeks', '1m': '1 Month' };
 
@@ -19,7 +20,7 @@ export function render(container) {
       await api.notifications.markRead();
       renderPage();
     } catch (e) {
-      container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">${e.message}</div></div>`;
+      container.innerHTML = `<div class="empty"><div class="empty-icon">${icons.alertTriangle()}</div><div class="empty-text">${e.message}</div></div>`;
     }
   }
 
@@ -36,7 +37,7 @@ export function render(container) {
           <div class="card" style="padding:0">
             ${notifications.slice(0, 20).map(notifHTML).join('')}
           </div>
-        ` : (!pendingApprovals.length ? `<div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">No activity yet</div></div>` : '')}
+        ` : (!pendingApprovals.length ? `<div class="empty"><div class="empty-icon">${icons.bell()}</div><div class="empty-text">No activity yet</div></div>` : '')}
 
         <div style="height:24px"></div>
       </div>
@@ -58,7 +59,7 @@ export function render(container) {
         <div style="font-size:13px;color:var(--text3)">${a.pendingPoints} pts · ${daysStr}</div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button class="btn btn-outline btn-full btn-sm" data-reject-task="${a.id}">Reject</button>
-          <button class="btn btn-success btn-full btn-sm" data-approve-task="${a.id}">Approve ✓</button>
+          <button class="btn btn-success btn-full btn-sm" data-approve-task="${a.id}">Approve</button>
         </div>
       </div>
     `;
@@ -84,9 +85,9 @@ export function render(container) {
       case 'friend_request': return `<strong>@${escHtml(d.fromUsername)}</strong> sent you a friend request`;
       case 'friend_response': return `<strong>@${escHtml(d.fromUsername)}</strong> ${d.accepted ? 'accepted' : 'declined'} your friend request`;
       case 'task_approval_request': return `<strong>@${escHtml(d.fromUsername)}</strong> asks you to approve task "<em>${escHtml(d.taskName)}</em>"`;
-      case 'task_approval_response': return `<strong>@${escHtml(d.fromUsername)}</strong> ${d.accepted ? 'approved ✓' : 'rejected ✕'} your task "<em>${escHtml(d.taskName)}</em>"`;
+      case 'task_approval_response': return `<strong>@${escHtml(d.fromUsername)}</strong> ${d.accepted ? 'approved' : 'rejected'} your task "<em>${escHtml(d.taskName)}</em>"`;
       case 'goal_proposal': return `<strong>@${escHtml(d.fromUsername)}</strong> proposed a goal: <strong>${d.targetPoints} pts</strong> / ${PERIOD_LABELS[d.period] || d.period} — go to Friends to respond`;
-      case 'goal_response': return `<strong>@${escHtml(d.fromUsername)}</strong> ${d.accepted ? 'accepted ✓' : 'declined ✕'} your goal proposal`;
+      case 'goal_response': return `<strong>@${escHtml(d.fromUsername)}</strong> ${d.accepted ? 'accepted' : 'declined'} your goal proposal`;
       default: return 'New notification';
     }
   }

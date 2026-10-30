@@ -1,3 +1,5 @@
+import { icons } from './icons.js';
+
 const routes = {
   '/': () => import('../pages/auth.js'),
   '/tasks': () => import('../pages/tasks.js'),
@@ -38,6 +40,6 @@ async function renderPage(path) {
     el.innerHTML = '';
     currentCleanup = mod.render(el) || null;
   } catch (e) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">Failed to load page</div></div>`;
+    el.innerHTML = `<div class="empty"><div class="empty-icon">${icons.alertTriangle()}</div><div class="empty-text">Failed to load page</div></div>`;
   }
 }
