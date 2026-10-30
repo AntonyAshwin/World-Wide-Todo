@@ -23,6 +23,22 @@ function taskAppearsToday(task) {
   return task.createdAt.split('T')[0] === today();
 }
 
+// Cancels a pending approval: marks it 'cancelled', removes from approver's pending list.
+// Called on edit or delete when task.approvalStatus === 'pending'.
+async function cancelPendingApproval(task, aStore) {
+  if (!task.activeApprovalId) return;
+  const approval = await aStore.get(`approval:${task.activeApprovalId}`, { type: 'json' });
+  if (!approval || approval.status !== 'pending') return;
+  approval.status = 'cancelled';
+  approval.updatedAt = new Date().toISOString();
+  const pKey = `pending_approvals:${approval.approverId}`;
+  const pList = await aStore.get(pKey, { type: 'json' }) || [];
+  await Promise.all([
+    aStore.set(`approval:${task.activeApprovalId}`, JSON.stringify(approval)),
+    aStore.set(pKey, JSON.stringify(pList.filter(id => id !== task.activeApprovalId))),
+  ]);
+}
+
 // Subtracts all approvedPoints for this task from approved_daily, resets records to approvedPoints=0.
 // Used by: unapprove, edit-of-approved-task.
 async function removeApprovedPoints(task, pStore, cStore) {
@@ -158,6 +174,9 @@ export default async (req, context) => {
     const oldPoints = task.points;
     const newPoints = points ? parseInt(points) : task.points;
 
+    if (task.approvalStatus === 'pending') {
+      await cancelPendingApproval(task, aStore);
+    }
     if (wasApproved) {
       await removeApprovedPoints(task, pStore, cStore);
     }
@@ -209,6 +228,10 @@ export default async (req, context) => {
     const task = await tStore.get(`task:${id}`, { type: 'json' });
     if (!task) return err('Not found', 404);
     if (task.userId !== userId) return err('Forbidden', 403);
+
+    if (task.approvalStatus === 'pending') {
+      await cancelPendingApproval(task, aStore);
+    }
 
     const tcKey = `task_completions:${id}`;
     const taskCompletions = await cStore.get(tcKey, { type: 'json' }) || [];
