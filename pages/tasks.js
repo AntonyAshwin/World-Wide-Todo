@@ -36,7 +36,10 @@ export function render(container) {
         <div class="daily-bar-top">
           <span class="daily-label" id="daily-label">${pct}%</span>
         </div>
-        <div class="daily-track"><div class="daily-fill" id="daily-fill" style="width:${pct}%;background-color:${pctColor(pct)}"></div></div>
+        <div class="daily-track">
+          <div class="daily-fill" id="daily-fill" style="width:${pct}%;background-color:${pctColor(pct)}"></div>
+          <div class="daily-marker" style="left:75%"></div>
+        </div>
       </div>
       <div id="task-list"></div>
       ${tasks.length === 0 ? `<div class="empty" style="padding-top:32px"><div class="empty-icon">${icons.clipboardList()}</div><div class="empty-text">No tasks for today</div></div>` : ''}

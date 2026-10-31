@@ -428,8 +428,9 @@ body {
 .daily-bar-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
 .daily-points { font-size: 22px; font-weight: 800; color: var(--primary); }
 .daily-label { font-size: 12px; color: var(--text3); }
-.daily-track { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.daily-track { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; position: relative; }
 .daily-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.4s ease, background-color 0.4s ease; }
+.daily-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--warning); transform: translateX(-50%); pointer-events: none; }
 
 /* Toggle for task approval status */
 .task-approval-badge {
