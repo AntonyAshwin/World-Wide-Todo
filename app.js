@@ -35,7 +35,7 @@ function buildShell(user) {
   document.getElementById('app').innerHTML = `
     <div class="app-shell">
       <header class="app-header">
-        <h1>Goals</h1>
+        <div></div>
         <div class="header-right">
           <span id="username-btn" style="font-size:13px;color:var(--text2);font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent">@${user.username}</span>
         </div>
