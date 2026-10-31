@@ -68,17 +68,16 @@ test.describe('Story: Today bar — live percentage update', () => {
 
     // Initial state: 0% (task not completed yet)
     const label = page.locator('#daily-label');
-    await expect(label).toHaveText('0% of today');
+    await expect(label).toHaveText('0%');
 
-    const pts = page.locator('#daily-pts');
-    await expect(pts).toHaveText('0 pts');
+    // daily-pts element no longer exists
+    await expect(page.locator('#daily-pts')).toHaveCount(0);
 
     // Complete the task by clicking it
     await page.locator(`.task-item[data-id="${task.id}"]`).click();
 
-    // Label and points must update WITHOUT any navigation/reload
-    await expect(label).toHaveText('100% of today', { timeout: 5_000 });
-    await expect(pts).toHaveText('20 pts');
+    // Label must update WITHOUT any navigation/reload
+    await expect(label).toHaveText('100%', { timeout: 5_000 });
 
     // Bar fill should also be 100%
     const fill = page.locator('#daily-fill');
@@ -101,12 +100,11 @@ test.describe('Story: Today bar — live percentage update', () => {
 
     // Complete it
     await page.locator(`.task-item[data-id="${task.id}"]`).click();
-    await expect(page.locator('#daily-label')).toHaveText('100% of today', { timeout: 5_000 });
+    await expect(page.locator('#daily-label')).toHaveText('100%', { timeout: 5_000 });
 
     // Toggle off
     await page.locator(`.task-item[data-id="${task.id}"]`).click();
-    await expect(page.locator('#daily-label')).toHaveText('0% of today', { timeout: 5_000 });
-    await expect(page.locator('#daily-pts')).toHaveText('0 pts');
+    await expect(page.locator('#daily-label')).toHaveText('0%', { timeout: 5_000 });
   });
 
   test('partial completion — percentage reflects correct fraction', async ({ page, request }) => {
@@ -129,17 +127,15 @@ test.describe('Story: Today bar — live percentage update', () => {
     await page.goto('/tasks');
     await page.waitForSelector('.task-item', { timeout: 10_000 });
 
-    await expect(page.locator('#daily-label')).toHaveText('0% of today');
+    await expect(page.locator('#daily-label')).toHaveText('0%');
 
     // Complete first task
     await page.locator(`.task-item[data-id="${t1.id}"]`).click();
-    await expect(page.locator('#daily-label')).toHaveText('50% of today', { timeout: 5_000 });
-    await expect(page.locator('#daily-pts')).toHaveText('10 pts');
+    await expect(page.locator('#daily-label')).toHaveText('50%', { timeout: 5_000 });
 
     // Complete second task
     await page.locator(`.task-item[data-id="${t2.id}"]`).click();
-    await expect(page.locator('#daily-label')).toHaveText('100% of today', { timeout: 5_000 });
-    await expect(page.locator('#daily-pts')).toHaveText('20 pts');
+    await expect(page.locator('#daily-label')).toHaveText('100%', { timeout: 5_000 });
   });
 });
 
