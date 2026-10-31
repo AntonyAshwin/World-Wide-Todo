@@ -215,3 +215,97 @@ test.describe('Story: Lock FAB — appears without reload after unlock', () => {
     await expect(page.locator('#approve-fab')).toHaveCount(0, { timeout: 5_000 });
   });
 });
+
+// ── Story: Today page FAB — quick-add task without leaving today view ───────────
+
+test.describe('Story: Today FAB — create task without navigation', () => {
+  test('FAB is visible on today page', async ({ page, request }) => {
+    const id = uid();
+    const a = await register(request, `alice${id}`);
+
+    await loginPage(page, a.token, a.user);
+    await page.goto('/tasks');
+    await page.waitForSelector('#tasks-fab', { timeout: 10_000 });
+
+    await expect(page.locator('#tasks-fab')).toBeVisible();
+  });
+
+  test('tapping FAB opens add-task modal', async ({ page, request }) => {
+    const id = uid();
+    const a = await register(request, `alice${id}`);
+
+    await loginPage(page, a.token, a.user);
+    await page.goto('/tasks');
+    await page.waitForSelector('#tasks-fab', { timeout: 10_000 });
+
+    await page.locator('#tasks-fab').click();
+    await expect(page.locator('#task-name')).toBeVisible({ timeout: 3_000 });
+    await expect(page.locator('#save-task-btn')).toHaveText('Create Task');
+  });
+
+  test('creating task via FAB adds it to today list — no navigation needed', async ({ page, request }) => {
+    const id = uid();
+    const a = await register(request, `alice${id}`);
+
+    await loginPage(page, a.token, a.user);
+    await page.goto('/tasks');
+    await page.waitForSelector('#tasks-fab', { timeout: 10_000 });
+
+    await page.locator('#tasks-fab').click();
+    await page.locator('#task-name').fill('Quick run');
+    await page.locator('#save-task-btn').click();
+
+    // Task must appear in today list without navigation
+    await expect(page.locator('.task-item')).toContainText('Quick run', { timeout: 5_000 });
+  });
+
+  test('task created via today FAB defaults to 1 point when points left blank', async ({ page, request }) => {
+    const id = uid();
+    const a = await register(request, `alice${id}`);
+
+    await loginPage(page, a.token, a.user);
+    await page.goto('/tasks');
+    await page.waitForSelector('#tasks-fab', { timeout: 10_000 });
+
+    await page.locator('#tasks-fab').click();
+    await page.locator('#task-name').fill('No-points task');
+    // leave points blank
+    await page.locator('#save-task-btn').click();
+
+    await expect(page.locator('.task-item')).toContainText('No-points task', { timeout: 5_000 });
+    // 1pt shown in the points label
+    await expect(page.locator('.task-points').first()).toContainText('1pts');
+  });
+
+  test('missing name shows inline error, modal stays open', async ({ page, request }) => {
+    const id = uid();
+    const a = await register(request, `alice${id}`);
+
+    await loginPage(page, a.token, a.user);
+    await page.goto('/tasks');
+    await page.waitForSelector('#tasks-fab', { timeout: 10_000 });
+
+    await page.locator('#tasks-fab').click();
+    // submit without filling name
+    await page.locator('#save-task-btn').click();
+
+    await expect(page.locator('#modal-error')).toHaveText('Task name required');
+    await expect(page.locator('#save-task-btn')).toBeVisible(); // modal still open
+  });
+
+  test('closing modal via X leaves today page intact', async ({ page, request }) => {
+    const id = uid();
+    const a = await register(request, `alice${id}`);
+
+    await loginPage(page, a.token, a.user);
+    await page.goto('/tasks');
+    await page.waitForSelector('#tasks-fab', { timeout: 10_000 });
+
+    await page.locator('#tasks-fab').click();
+    await expect(page.locator('#task-name')).toBeVisible();
+
+    await page.locator('#close-modal').click();
+    await expect(page.locator('#task-name')).toHaveCount(0); // modal gone
+    await expect(page.locator('#tasks-fab')).toBeVisible();  // FAB still there
+  });
+});
