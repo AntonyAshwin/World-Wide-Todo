@@ -152,11 +152,12 @@ export default async (req, context) => {
   if (method === 'POST' && !id) {
     const { name, points, days } = await req.json();
     if (!name || !name.trim()) return err('Task name required');
-    if (!points || points < 1 || points > 1000) return err('Points must be 1-1000');
+    const pts = points !== undefined && points !== null && points !== '' ? parseInt(points) : 1;
+    if (isNaN(pts) || pts < 1 || pts > 1000) return err('Points must be 1-1000');
     const validDays = Array.isArray(days) ? days.filter(d => d >= 0 && d <= 6) : [];
     const taskId = uid();
     const task = {
-      id: taskId, userId, name: name.trim(), points: parseInt(points), days: validDays,
+      id: taskId, userId, name: name.trim(), points: pts, days: validDays,
       approvalStatus: 'none', approvedBy: null, activeApprovalId: null,
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     };

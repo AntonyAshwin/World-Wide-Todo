@@ -382,3 +382,46 @@ describe('GET /api/tasks/approvals', () => {
     expect(body.data.approvals[0].ownerUsername).toBeNull();
   });
 });
+
+describe('POST /api/tasks — optional points default', () => {
+  beforeEach(() => {
+    storeMap.tasks = createStore({ [`user_tasks:${USER_ID}`]: [] });
+    storeMap.users = createStore({ [`user:${USER_ID}`]: { id: USER_ID, username: 'alice' } });
+    storeMap.points = createStore();
+    storeMap.completions = createStore();
+    storeMap.approvals = createStore();
+    storeMap.friendships = createStore();
+    storeMap.goals = createStore();
+    storeMap.notifications = createStore();
+  });
+
+  it('omitting points defaults to 1', async () => {
+    const res = await handler(req('POST', null, null, { name: 'Quick task' }), ctx());
+    const body = await json(res);
+    expect(res.status).toBe(201);
+    expect(body.data.task.points).toBe(1);
+  });
+
+  it('points: null defaults to 1', async () => {
+    const res = await handler(req('POST', null, null, { name: 'Quick task', points: null }), ctx());
+    const body = await json(res);
+    expect(body.data.task.points).toBe(1);
+  });
+
+  it('points: empty string defaults to 1', async () => {
+    const res = await handler(req('POST', null, null, { name: 'Quick task', points: '' }), ctx());
+    const body = await json(res);
+    expect(body.data.task.points).toBe(1);
+  });
+
+  it('explicit points value still respected', async () => {
+    const res = await handler(req('POST', null, null, { name: 'Workout', points: 50 }), ctx());
+    const body = await json(res);
+    expect(body.data.task.points).toBe(50);
+  });
+
+  it('points 0 still rejected (out of range)', async () => {
+    const res = await handler(req('POST', null, null, { name: 'Bad', points: 0 }), ctx());
+    expect(res.status).toBe(400);
+  });
+});

@@ -39,7 +39,7 @@ export function render(container) {
     if (!row) {
       row = document.createElement('div');
       row.id = 'fab-row';
-      row.style.cssText = 'position:fixed;bottom:80px;right:16px;display:flex;gap:10px;align-items:center;z-index:100;';
+      row.style.cssText = 'position:fixed;bottom:calc(64px + env(safe-area-inset-bottom, 0px) + 8px);right:16px;display:flex;gap:10px;align-items:center;z-index:20;';
       container.appendChild(row);
     }
     row.innerHTML = '';
@@ -235,8 +235,8 @@ export function render(container) {
             <input class="form-input" id="task-name" type="text" placeholder="e.g. Morning run" value="${task ? escHtml(task.name) : ''}">
           </div>
           <div class="form-group">
-            <label class="form-label">Points (1–1000)</label>
-            <input class="form-input" id="task-pts" type="number" min="1" max="1000" placeholder="10" value="${task ? task.points : ''}">
+            <label class="form-label">Points (1–1000, default 1)</label>
+            <input class="form-input" id="task-pts" type="number" min="1" max="1000" placeholder="1" value="${task ? task.points : ''}">
           </div>
           <div class="form-group">
             <label class="form-label">Recurring Days</label>
@@ -275,11 +275,12 @@ export function render(container) {
       const btn = modal.querySelector('#save-task-btn');
       const errEl = modal.querySelector('#modal-error');
       const name = modal.querySelector('#task-name').value.trim();
-      const points = parseInt(modal.querySelector('#task-pts').value);
+      const rawPts = modal.querySelector('#task-pts').value;
+      const points = rawPts === '' ? 1 : parseInt(rawPts);
       errEl.textContent = '';
 
       if (!name) { errEl.textContent = 'Task name required'; return; }
-      if (!points || points < 1 || points > 1000) { errEl.textContent = 'Points must be 1–1000'; return; }
+      if (isNaN(points) || points < 1 || points > 1000) { errEl.textContent = 'Points must be 1–1000'; return; }
 
       btn.disabled = true;
       try {

@@ -397,7 +397,7 @@ body {
 /* FAB */
 .fab {
   position: fixed;
-  bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px);
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + 8px);
   right: 20px;
   width: 52px;
   height: 52px;
