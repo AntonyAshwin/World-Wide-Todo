@@ -31,15 +31,9 @@ export function showToast(msg, duration = 2200) {
   setTimeout(() => t.remove(), duration);
 }
 
-function buildShell(user) {
+function buildShell() {
   document.getElementById('app').innerHTML = `
     <div class="app-shell">
-      <header class="app-header">
-        <div></div>
-        <div class="header-right">
-          <span id="username-btn" style="font-size:13px;color:var(--text2);font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent">@${user.username}</span>
-        </div>
-      </header>
       <main class="page-content" id="page-root"></main>
       <nav class="bottom-nav" id="bottom-nav"></nav>
     </div>
@@ -60,42 +54,22 @@ function buildShell(user) {
 
   initRouter();
 
-  document.getElementById('username-btn').addEventListener('click', () => {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal-sheet">
-        <div class="modal-handle"></div>
-        <div class="modal-header"><span class="modal-title">@${user.username}</span></div>
-        <div class="modal-body">
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-outline btn-full" id="cancel-logout">Cancel</button>
-            <button class="btn btn-danger btn-full" id="confirm-logout">Log Out</button>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    modal.querySelector('#cancel-logout').addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
-    modal.querySelector('#confirm-logout').addEventListener('click', () => {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-      setToken(null);
-      modal.remove();
-      setState({ user: null });
-      document.getElementById('app').innerHTML = '<div id="page-root"></div>';
-      initRouter();
-      navigate('/');
-    });
-  });
-
   on('unreadCount', (count) => {
     const badge = document.getElementById('notif-badge');
     if (!badge) return;
     badge.style.display = count > 0 ? 'flex' : 'none';
     badge.textContent = count > 99 ? '99+' : count;
   });
+}
+
+export function logout() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  setToken(null);
+  setState({ user: null });
+  document.getElementById('app').innerHTML = '<div id="page-root"></div>';
+  initRouter();
+  navigate('/');
 }
 
 function updateNavActive(path) {
@@ -118,7 +92,7 @@ export function handleLoginSuccess(token, user) {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
   setToken(token);
   setState({ user });
-  buildShell(user);
+  buildShell();
   navigate('/tasks');
   updateNavActive('/tasks');
   pollNotifications();
@@ -132,7 +106,7 @@ async function init() {
       setToken(token);
       const data = await api.auth.me();
       setState({ user: data.user });
-      buildShell(data.user);
+      buildShell();
       const dest = VALID_PATHS.includes(location.pathname) ? location.pathname : '/tasks';
       navigate(dest);
       updateNavActive(dest);

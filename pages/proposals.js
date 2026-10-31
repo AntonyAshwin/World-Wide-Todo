@@ -1,5 +1,5 @@
 import { api } from '../js/api.js';
-import { showToast } from '../app.js';
+import { showToast, logout } from '../app.js';
 import { icons } from '../js/icons.js';
 
 const PERIOD_LABELS = { '1w': '1 Week', '2w': '2 Weeks', '3w': '3 Weeks', '1m': '1 Month' };
@@ -40,6 +40,9 @@ export function render(container) {
         ` : (!pendingApprovals.length ? `<div class="empty"><div class="empty-icon">${icons.bell()}</div><div class="empty-text">No activity yet</div></div>` : '')}
 
         <div style="height:24px"></div>
+        <div style="padding:0 16px 8px">
+          <button class="btn btn-outline btn-full" id="signout-btn" style="color:var(--danger);border-color:var(--danger)">Sign Out</button>
+        </div>
       </div>
     `;
 
@@ -47,6 +50,7 @@ export function render(container) {
       btn.addEventListener('click', () => respondApproval(btn.dataset.approveTask, true)));
     container.querySelectorAll('[data-reject-task]').forEach(btn =>
       btn.addEventListener('click', () => respondApproval(btn.dataset.rejectTask, false)));
+    container.querySelector('#signout-btn').addEventListener('click', logout);
   }
 
   function approvalHTML(a) {
