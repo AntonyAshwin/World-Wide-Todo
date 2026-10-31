@@ -36,7 +36,7 @@ export function render(container) {
         <div class="daily-bar-top">
           <span class="daily-label" id="daily-label">${pct}%</span>
         </div>
-        <div class="daily-track"><div class="daily-fill" id="daily-fill" style="width:${pct}%"></div></div>
+        <div class="daily-track"><div class="daily-fill" id="daily-fill" style="width:${pct}%;background-color:${pctColor(pct)}"></div></div>
       </div>
       <div id="task-list"></div>
       ${tasks.length === 0 ? `<div class="empty" style="padding-top:32px"><div class="empty-icon">${icons.clipboardList()}</div><div class="empty-text">No tasks for today</div></div>` : ''}
@@ -172,12 +172,18 @@ export function render(container) {
     }
   }
 
+  function pctColor(pct) {
+    // 0% = hue 0 (red), 40% = hue 60 (yellow), 100% = hue 120 (green)
+    const h = pct <= 40 ? pct * 1.5 : 60 + (pct - 40);
+    return `hsl(${h}, 72%, 45%)`;
+  }
+
   function updateProgressBar() {
     const earned = tasks.filter(t => t.completedToday).reduce((s, t) => s + t.completedPoints, 0);
     const pct = totalPossible > 0 ? Math.min(100, Math.round((earned / totalPossible) * 100)) : 0;
     const fillEl = container.querySelector('#daily-fill');
     const labelEl = container.querySelector('#daily-label');
-    if (fillEl) fillEl.style.width = `${pct}%`;
+    if (fillEl) { fillEl.style.width = `${pct}%`; fillEl.style.backgroundColor = pctColor(pct); }
     if (labelEl) labelEl.textContent = `${pct}%`;
   }
 
