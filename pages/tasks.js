@@ -121,7 +121,11 @@ export function render(container) {
   function renderTaskList() {
     const list = container.querySelector('#task-list');
     if (!list) return;
-    list.innerHTML = tasks.map(t => taskHTML(t)).join('');
+    const sorted = [...tasks].sort((a, b) => {
+      if (a.completedToday !== b.completedToday) return a.completedToday ? 1 : -1;
+      return b.points - a.points;
+    });
+    list.innerHTML = sorted.map(t => taskHTML(t)).join('');
     list.querySelectorAll('.task-item').forEach(el => {
       el.addEventListener('click', () => toggle(el.dataset.id));
     });

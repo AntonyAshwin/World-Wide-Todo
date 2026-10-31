@@ -305,3 +305,75 @@ test.describe('Story: Today FAB — create task without navigation', () => {
     await expect(page.locator('#tasks-fab')).toBeVisible();  // FAB still there
   });
 });
+
+// ── Story: Task sort order ─────────────────────────────────────────────────────
+
+test.describe('Story: Task sort order — highest points first, completed at bottom', () => {
+  // Parse "90pts" or "+90pts" → 90
+  function parsePts(text) {
+    return parseInt(text.replace(/[^0-9]/g, ''));
+  }
+
+  async function getPointsInOrder(page, selector = '.task-item .task-points') {
+    const texts = await page.locator(selector).allTextContents();
+    return texts.map(parsePts);
+  }
+
+  test('incomplete tasks sorted highest-to-lowest points on load', async ({ page, request }) => {
+    const id = uid();
+    const a = await register(request, `alice${id}`);
+    const u = authedReq(request, a.token);
+
+    // Create 10 tasks sequentially (parallel writes race on user_tasks index)
+    const pointValues = [50, 10, 90, 30, 70, 20, 80, 40, 60, 5];
+    for (const pts of pointValues) {
+      await u.post('/api/tasks', { name: `Task ${pts}`, points: pts, days: [] });
+    }
+
+    await loginPage(page, a.token, a.user);
+    await page.goto('/tasks');
+    await page.waitForSelector('.task-item', { timeout: 10_000 });
+
+    const pts = await getPointsInOrder(page);
+    expect(pts).toEqual([90, 80, 70, 60, 50, 40, 30, 20, 10, 5]);
+  });
+
+  test('completing tasks moves them to bottom; both groups remain sorted desc', async ({ page, request }) => {
+    const id = uid();
+    const a = await register(request, `alice${id}`);
+    const u = authedReq(request, a.token);
+
+    const pointValues = [50, 10, 90, 30, 70, 20, 80, 40, 60, 5];
+    const created = [];
+    for (const pts of pointValues) {
+      const res = await u.post('/api/tasks', { name: `Task ${pts}`, points: pts, days: [] });
+      const body = await res.json();
+      created.push(body.data.task);
+    }
+
+    await loginPage(page, a.token, a.user);
+    await page.goto('/tasks');
+    await page.waitForSelector('.task-item', { timeout: 10_000 });
+
+    // Complete the 3 highest-point tasks (90, 80, 70) by data-id
+    const toComplete = created.filter(t => [90, 80, 70].includes(t.points));
+    for (const task of toComplete) {
+      await page.locator(`.task-item[data-id="${task.id}"]`).click();
+    }
+
+    // Wait for all 3 to get the done class (optimistic update is synchronous)
+    await expect(page.locator('.task-item.done')).toHaveCount(3, { timeout: 5_000 });
+
+    // Incomplete group: sorted desc [60, 50, 40, 30, 20, 10, 5]
+    const incompletePts = await getPointsInOrder(page, '.task-item:not(.done) .task-points');
+    expect(incompletePts).toEqual([60, 50, 40, 30, 20, 10, 5]);
+
+    // Completed group: sorted desc [90, 80, 70]
+    const completedPts = await getPointsInOrder(page, '.task-item.done .task-points');
+    expect(completedPts).toEqual([90, 80, 70]);
+
+    // Full DOM order: incomplete first then completed
+    const allPts = await getPointsInOrder(page);
+    expect(allPts).toEqual([60, 50, 40, 30, 20, 10, 5, 90, 80, 70]);
+  });
+});
