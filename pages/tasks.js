@@ -168,7 +168,6 @@ export function render(container) {
       task.completedPoints = result.completed ? result.points : 0;
       updateProgressBar();
       renderTaskList();
-      showToast(result.completed ? `+${result.points} pts earned!` : 'Points removed');
     } catch (e) {
       // Roll back
       task.completedToday = wasCompleted;
