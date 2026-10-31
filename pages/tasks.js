@@ -147,27 +147,41 @@ export function render(container) {
   async function toggle(taskId) {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
-    const el = container.querySelector(`.task-item[data-id="${taskId}"]`);
-    if (el) el.style.opacity = '0.5';
+
+    // Optimistic update — flip immediately
+    const wasCompleted = task.completedToday;
+    task.completedToday = !wasCompleted;
+    task.completedPoints = task.completedToday ? task.points : 0;
+    updateProgressBar();
+    renderTaskList();
+
     try {
       const result = await api.tasks.complete(taskId);
+      // Reconcile with server values (points may differ if task was edited)
       task.completedToday = result.completed;
       task.completedPoints = result.completed ? result.points : 0;
-      // Recalculate
-      const earned = tasks.filter(t => t.completedToday).reduce((s, t) => s + t.completedPoints, 0);
-      const pct = totalPossible > 0 ? Math.min(100, Math.round((earned / totalPossible) * 100)) : 0;
-      const ptsEl = container.querySelector('#daily-pts');
-      const fillEl = container.querySelector('#daily-fill');
-      const labelEl = container.querySelector('#daily-label');
-      if (ptsEl) ptsEl.textContent = `${earned} pts`;
-      if (fillEl) fillEl.style.width = `${pct}%`;
-      if (labelEl) labelEl.textContent = `${pct}% of today`;
+      updateProgressBar();
       renderTaskList();
       showToast(result.completed ? `+${result.points} pts earned!` : 'Points removed');
     } catch (e) {
+      // Roll back
+      task.completedToday = wasCompleted;
+      task.completedPoints = wasCompleted ? task.points : 0;
+      updateProgressBar();
+      renderTaskList();
       showToast(e.message);
-      if (el) el.style.opacity = '1';
     }
+  }
+
+  function updateProgressBar() {
+    const earned = tasks.filter(t => t.completedToday).reduce((s, t) => s + t.completedPoints, 0);
+    const pct = totalPossible > 0 ? Math.min(100, Math.round((earned / totalPossible) * 100)) : 0;
+    const ptsEl = container.querySelector('#daily-pts');
+    const fillEl = container.querySelector('#daily-fill');
+    const labelEl = container.querySelector('#daily-label');
+    if (ptsEl) ptsEl.textContent = `${earned} pts`;
+    if (fillEl) fillEl.style.width = `${pct}%`;
+    if (labelEl) labelEl.textContent = `${pct}% of today`;
   }
 
   function escHtml(s) {
