@@ -83,7 +83,10 @@ function buildShell(user) {
       localStorage.removeItem(USER_KEY);
       setToken(null);
       modal.remove();
-      location.reload();
+      setState({ user: null });
+      document.getElementById('app').innerHTML = '<div id="page-root"></div>';
+      initRouter();
+      navigate('/');
     });
   });
 
