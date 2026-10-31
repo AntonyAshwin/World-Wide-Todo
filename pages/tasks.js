@@ -1,6 +1,5 @@
 import { api } from '../js/api.js';
 import { showToast } from '../app.js';
-import { navigate } from '../js/router.js';
 import { icons } from '../js/icons.js';
 
 const DAYS = ['S','M','T','W','T','F','S'];
@@ -32,7 +31,6 @@ export function render(container) {
     container.innerHTML = `
       <div class="section-header" style="padding-top:16px">
         <span style="font-size:15px;font-weight:700">${dateLabel}</span>
-        <button class="btn btn-ghost btn-sm" id="add-task-btn">+ Add Task</button>
       </div>
       <div class="daily-bar">
         <div class="daily-bar-top">
@@ -42,11 +40,80 @@ export function render(container) {
         <div class="daily-track"><div class="daily-fill" id="daily-fill" style="width:${pct}%"></div></div>
       </div>
       <div id="task-list"></div>
-      ${tasks.length === 0 ? `<div class="empty" style="padding-top:32px"><div class="empty-icon">${icons.clipboardList()}</div><div class="empty-text">No tasks for today</div><div class="empty-sub">Tap "+ Add Task" to create one</div></div>` : ''}
+      ${tasks.length === 0 ? `<div class="empty" style="padding-top:32px"><div class="empty-icon">${icons.clipboardList()}</div><div class="empty-text">No tasks for today</div></div>` : ''}
+      <div style="height:96px"></div>
     `;
 
     renderTaskList();
-    container.querySelector('#add-task-btn').addEventListener('click', () => navigate('/manage'));
+    renderFab();
+  }
+
+  function renderFab() {
+    let fab = document.getElementById('tasks-fab');
+    if (fab) return;
+    fab = document.createElement('button');
+    fab.id = 'tasks-fab';
+    fab.style.cssText = 'position:fixed;bottom:calc(64px + env(safe-area-inset-bottom, 0px) + 8px);right:16px;width:52px;height:52px;border-radius:50%;background:var(--primary);color:#fff;font-size:28px;font-weight:300;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25);line-height:1;z-index:20;';
+    fab.innerHTML = '+';
+    fab.addEventListener('click', openAddModal);
+    container.appendChild(fab);
+  }
+
+  function openAddModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <span class="modal-title">New Task</span>
+          <button class="modal-close" id="close-modal">${icons.x()}</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Task Name</label>
+            <input class="form-input" id="task-name" type="text" placeholder="e.g. Morning run" autofocus>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Points (1–1000, default 1)</label>
+            <input class="form-input" id="task-pts" type="number" min="1" max="1000" placeholder="1">
+          </div>
+          <div id="modal-error" class="form-error" style="margin-bottom:12px"></div>
+          <button class="btn btn-primary btn-full" id="save-task-btn">Create Task</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#close-modal').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+    modal.querySelector('#save-task-btn').addEventListener('click', async () => {
+      const btn = modal.querySelector('#save-task-btn');
+      const errEl = modal.querySelector('#modal-error');
+      const name = modal.querySelector('#task-name').value.trim();
+      const rawPts = modal.querySelector('#task-pts').value;
+      const points = rawPts === '' ? 1 : parseInt(rawPts);
+      errEl.textContent = '';
+
+      if (!name) { errEl.textContent = 'Task name required'; return; }
+      if (isNaN(points) || points < 1 || points > 1000) { errEl.textContent = 'Points must be 1–1000'; return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Creating…';
+      try {
+        await api.tasks.create({ name, points, days: [] });
+        modal.remove();
+        const data = await api.tasks.today();
+        tasks = data.tasks;
+        todayStr = data.date;
+        renderPage();
+        showToast('Task created');
+      } catch (e) {
+        errEl.textContent = e.message;
+        btn.disabled = false;
+        btn.textContent = 'Create Task';
+      }
+    });
   }
 
   function renderTaskList() {
