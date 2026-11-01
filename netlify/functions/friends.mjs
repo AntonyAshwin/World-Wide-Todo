@@ -95,9 +95,33 @@ export default async (req, context) => {
     return ok({ friendship });
   }
 
+  // DELETE /api/friends/:id — remove friendship
+  if (method === 'DELETE' && id && !action) {
+    const friendship = await store.get(`friendship:${id}`, { type: 'json' });
+    if (!friendship) return err('Not found', 404);
+    if (friendship.requesterId !== userId && friendship.receiverId !== userId) return err('Forbidden', 403);
+    if (friendship.status !== 'accepted') return err('Not an accepted friendship', 409);
+
+    const otherId = friendship.requesterId === userId ? friendship.receiverId : friendship.requesterId;
+
+    const removeFromIndex = async (uid_) => {
+      const key = `user_friendships:${uid_}`;
+      const existing = await store.get(key, { type: 'json' }) || [];
+      await store.set(key, JSON.stringify(existing.filter(fid => fid !== id)));
+    };
+
+    await Promise.all([
+      store.delete(`friendship:${id}`),
+      removeFromIndex(userId),
+      removeFromIndex(otherId),
+    ]);
+
+    return ok({ removed: true });
+  }
+
   return err('Not found', 404);
 };
 
 export const config = {
-  path: ['/api/friends', '/api/friends/:id/:action'],
+  path: ['/api/friends', '/api/friends/:id', '/api/friends/:id/:action'],
 };

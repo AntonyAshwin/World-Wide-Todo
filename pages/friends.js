@@ -141,6 +141,7 @@ export function render(container) {
           ${activeGoalHTML}
           ${pendingHTML}
           <button class="btn btn-primary btn-full" id="propose-goal-btn">Propose New Goal</button>
+          <button class="btn btn-outline btn-full" id="remove-friend-btn" style="color:var(--danger);border-color:var(--danger);margin-top:8px">Remove Friend</button>
         </div>
       </div>
     `;
@@ -163,6 +164,44 @@ export function render(container) {
     modal.querySelector('#propose-goal-btn').addEventListener('click', () => {
       modal.remove();
       openProposeModal(friendship);
+    });
+
+    modal.querySelector('#remove-friend-btn').addEventListener('click', async () => {
+      modal.remove();
+      confirmRemoveFriend(friendship);
+    });
+  }
+
+  function confirmRemoveFriend(friendship) {
+    const u = friendship.otherUser;
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header"><span class="modal-title">Remove Friend?</span></div>
+        <div class="modal-body">
+          <p style="color:var(--text2);margin-bottom:16px">Remove <strong>@${escHtml(u.username)}</strong>? Your shared scoreboard and goals will be lost.</p>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-full" id="cancel-remove">Cancel</button>
+            <button class="btn btn-danger btn-full" id="confirm-remove">Remove</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#cancel-remove').addEventListener('click', () => modal.remove());
+    modal.querySelector('#confirm-remove').addEventListener('click', async () => {
+      try {
+        await api.friends.remove(friendship.id);
+        friendships = friendships.filter(f => f.id !== friendship.id);
+        modal.remove();
+        renderPage();
+        showToast(`@${u.username} removed`);
+      } catch (e) {
+        showToast(e.message);
+        modal.remove();
+      }
     });
   }
 

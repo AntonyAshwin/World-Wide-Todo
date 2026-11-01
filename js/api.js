@@ -27,6 +27,7 @@ export const api = {
     list: () => request('GET', '/friends'),
     request: (username) => request('POST', '/friends', { username }),
     respond: (id, accept) => request('PUT', `/friends/${id}/respond`, { accept }),
+    remove: (id) => request('DELETE', `/friends/${id}`),
   },
   tasks: {
     list: () => request('GET', '/tasks'),
